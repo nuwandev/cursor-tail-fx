@@ -28,6 +28,35 @@ pub fn run() {
                     );
                 }
             }
+            
+            // Mouse tracking thread
+            let app_handle = app.handle().clone();
+            std::thread::spawn(move || {
+                #[cfg(target_os = "windows")]
+                {
+                    use windows::Win32::UI::Input::KeyboardAndMouse::GetCursorPos;
+                    use windows::Win32::Foundation::POINT;
+                    use tauri::Emitter;
+                    use std::time::Duration;
+
+                    let mut last_pos = (0, 0);
+
+                    loop {
+                        let mut point = POINT::default();
+                        unsafe {
+                            if GetCursorPos(&mut point).is_ok() {
+                                let current_pos = (point.x, point.y);
+                                if current_pos != last_pos {
+                                    app_handle.emit("cursor-move", current_pos).unwrap_or(());
+                                    last_pos = current_pos;
+                                }
+                            }
+                        }
+                        std::thread::sleep(Duration::from_millis(8)); // ~120Hz
+                    }
+                }
+            });
+            
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![greet])
