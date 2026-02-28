@@ -13,6 +13,10 @@ export class TrailEngine {
     private instanceData: Float32Array;
     private headIndex: number = 0;
 
+    // Performance State
+    private isRendering: boolean = true;
+    private lastParticleTime: number = 0;
+
     private config: AppConfig = { ...DEFAULT_CONFIG };
 
     // Uniform Locations
@@ -127,6 +131,14 @@ export class TrailEngine {
     }
 
     public spawnParticle(x: number, y: number, vx: number, vy: number, t: number) {
+        this.lastParticleTime = t;
+
+        // Wake up loop if sleeping
+        if (!this.isRendering) {
+            this.isRendering = true;
+            this.render(performance.now());
+        }
+
         const idx = this.headIndex * FLOATS_PER_INSTANCE;
 
         this.instanceData[idx + 0] = x;
@@ -149,6 +161,17 @@ export class TrailEngine {
     }
 
     private render(time: number) {
+        if (!this.isRendering) return;
+
+        // Sleep if no particles have been spawned for 3.0 seconds
+        // (Allows all existing particles time to fade away and die cleanly)
+        if (time - this.lastParticleTime > 3000) {
+            this.gl.clearColor(0, 0, 0, 0);
+            this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+            this.isRendering = false;
+            return;
+        }
+
         const gl = this.gl;
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT);

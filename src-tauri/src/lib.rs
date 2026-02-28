@@ -58,7 +58,8 @@ pub fn run() {
                     use tauri::Emitter;
                     use std::time::Duration;
 
-                    let mut last_pos = (0.0, 0.0);
+                    let mut last_pos = (-1.0, -1.0);
+                    let mut idle_count = 0;
 
                     loop {
                         let mut point = POINT::default();
@@ -73,14 +74,29 @@ pub fn run() {
                                     let nx = (point.x - offset_x) as f64 / cx as f64;
                                     let ny = (point.y - offset_y) as f64 / cy as f64;
                                     
-                                    if (nx - last_pos.0).abs() > 0.0001 || (ny - last_pos.1).abs() > 0.0001 {
-                                        app_handle.emit("cursor-move", (nx, ny)).unwrap_or(());
+                                    // Calculate delta to see if mouse genuinely moved
+                                    let dx = (nx - last_pos.0).abs();
+                                    let dy = (ny - last_pos.1).abs();
+
+                                    if dx > 0.00001 || dy > 0.00001 {
+                                        let _ = app_handle.emit("cursor-move", (nx, ny));
                                         last_pos = (nx, ny);
+                                        idle_count = 0;
+                                    } else {
+                                        idle_count += 1;
                                     }
                                 }
                             }
                         }
-                        std::thread::sleep(Duration::from_millis(8)); // ~120Hz
+
+                        // Adaptive Polling:
+                        // If moving, poll at ~120Hz (8ms). 
+                        // If idle for > 50 frames (400ms), drop polling to ~20Hz (50ms) to save CPU.
+                        if idle_count > 50 {
+                            std::thread::sleep(Duration::from_millis(50));
+                        } else {
+                            std::thread::sleep(Duration::from_millis(8)); 
+                        }
                     }
                 }
             });
