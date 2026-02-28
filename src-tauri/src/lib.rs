@@ -38,7 +38,7 @@ pub fn run() {
 
                     SetWindowPos(
                         hwnd,
-                        HWND_TOPMOST,
+                        Some(HWND_TOPMOST),
                         x, y, cx, cy,
                         SWP_NOZORDER | SWP_NOACTIVATE
                     ).unwrap();
@@ -50,7 +50,7 @@ pub fn run() {
             std::thread::spawn(move || {
                 #[cfg(target_os = "windows")]
                 {
-                    use windows::Win32::UI::Input::KeyboardAndMouse::GetCursorPos;
+                    use windows::Win32::UI::WindowsAndMessaging::GetCursorPos;
                     use windows::Win32::Foundation::POINT;
                     use tauri::Emitter;
                     use std::time::Duration;
