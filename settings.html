@@ -60,6 +60,54 @@
             border-color: #a6e3a1;
         }
 
+        .slider-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .slider-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.95rem;
+            color: #bac2de;
+        }
+
+        .slider-header span {
+            color: #a6e3a1;
+            font-weight: bold;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            border-radius: 50%;
+            background: #f38ba8;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #45475a;
+            border-radius: 2px;
+        }
+
         .credit {
             margin-top: auto;
             text-align: center;
@@ -82,11 +130,29 @@
 
     <div class="section">
         <h2>Trail Theme</h2>
-        <button class="theme-btn active" data-theme="cyan" style="border-left-color: #00cccc;">Cyan Glow
-            (Default)</button>
+        <button class="theme-btn active" data-theme="cyan" style="border-left-color: #00cccc;">Cyan Glow</button>
         <button class="theme-btn" data-theme="neon" style="border-left-color: #ff00ff;">Neon Pink</button>
         <button class="theme-btn" data-theme="fire" style="border-left-color: #ff4500;">Fire Intensity</button>
         <button class="theme-btn" data-theme="minimal" style="border-left-color: #ffffff;">Minimal White</button>
+    </div>
+
+    <div class="section">
+        <h2>Advanced Tuning</h2>
+
+        <div class="slider-group">
+            <div class="slider-header">Opacity <span id="opacity-val">100%</span></div>
+            <input type="range" id="opacity" min="0.1" max="1.0" step="0.1" value="1.0">
+        </div>
+
+        <div class="slider-group">
+            <div class="slider-header">Trail Length <span id="length-val">1.0x</span></div>
+            <input type="range" id="length" min="0.1" max="3.0" step="0.1" value="1.0">
+        </div>
+
+        <div class="slider-group">
+            <div class="slider-header">Particle Size <span id="size-val">1.0x</span></div>
+            <input type="range" id="size" min="0.1" max="3.0" step="0.1" value="1.0">
+        </div>
     </div>
 
     <div class="credit">

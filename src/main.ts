@@ -1,4 +1,5 @@
 import { listen } from "@tauri-apps/api/event";
+import { AppConfig, DEFAULT_CONFIG, THEMES } from "./config";
 
 const VS_SRC = `#version 300 es
 in vec2 a_quadPos;
@@ -10,13 +11,15 @@ in vec3 i_color;
 
 uniform vec2 u_resolution;
 uniform float u_time;
+uniform float u_sizeMultiplier;
+uniform float u_lengthMultiplier;
 
 out vec4 v_color;
 out vec2 v_uv;
 
 void main() {
     float age = u_time - i_spawnTime;
-    float lifeRatio = age / i_lifeTime;
+    float lifeRatio = age / (i_lifeTime * u_lengthMultiplier);
     
     if (lifeRatio < 0.0 || lifeRatio >= 1.0) {
         // Hide dead particles
@@ -25,7 +28,7 @@ void main() {
     }
     
     vec2 pos = i_position + i_velocity * (age / 1000.0);
-    float size = 15.0 * (1.0 - lifeRatio);
+    float size = 15.0 * u_sizeMultiplier * (1.0 - lifeRatio);
     float alpha = 1.0 - lifeRatio;
     
     vec2 finalPos = pos + a_quadPos * size;
@@ -47,13 +50,16 @@ const FS_SRC = `#version 300 es
 precision mediump float;
 in vec4 v_color;
 in vec2 v_uv;
+
+uniform float u_opacityMultiplier;
+
 out vec4 outColor;
 
 void main() {
     float dist = length(v_uv);
     if (dist > 1.0) discard;
     float glow = exp(-dist * 3.0); // Soft exponential fade
-    outColor = vec4(v_color.rgb * v_color.a * glow, v_color.a * glow);
+    outColor = vec4(v_color.rgb * v_color.a * glow * u_opacityMultiplier, v_color.a * glow * u_opacityMultiplier);
 }
 `;
 
@@ -166,14 +172,17 @@ async function init() {
 
   const u_resolution = gl.getUniformLocation(program, "u_resolution");
   const u_time = gl.getUniformLocation(program, "u_time");
+  const u_sizeMultiplier = gl.getUniformLocation(program, "u_sizeMultiplier");
+  const u_lengthMultiplier = gl.getUniformLocation(program, "u_lengthMultiplier");
+  const u_opacityMultiplier = gl.getUniformLocation(program, "u_opacityMultiplier");
 
   let headIndex = 0;
   let lastMouse = { x: 0, y: 0 };
   let hasMouse = false;
 
-  let currentTheme = "cyan";
-  listen<{ theme: string }>("style-update", (event) => {
-    currentTheme = event.payload.theme;
+  let currentConfig: AppConfig = { ...DEFAULT_CONFIG };
+  listen<AppConfig>("config-update", (event) => {
+    currentConfig = event.payload;
   });
 
   function spawnParticle(x: number, y: number, vx: number, vy: number, t: number) {
@@ -186,14 +195,10 @@ async function init() {
     instanceData[idx + 4] = t;
     instanceData[idx + 5] = 800.0; // Math.random() * 500 + 300
 
-    let r = 0.0, g = 0.8, b = 1.0;
-    if (currentTheme === "neon") { r = 1.0; g = 0.0; b = 1.0; }
-    else if (currentTheme === "fire") { r = 1.0; g = 0.27; b = 0.0; }
-    else if (currentTheme === "minimal") { r = 1.0; g = 1.0; b = 1.0; }
-
-    instanceData[idx + 6] = r;
-    instanceData[idx + 7] = g;
-    instanceData[idx + 8] = b;
+    const themeColor = THEMES[currentConfig.theme] || THEMES.cyan;
+    instanceData[idx + 6] = themeColor.r;
+    instanceData[idx + 7] = themeColor.g;
+    instanceData[idx + 8] = themeColor.b;
 
     // Direct subset upload for speed
     gl.bindBuffer(gl.ARRAY_BUFFER, instanceBuffer);
@@ -245,6 +250,9 @@ async function init() {
     gl.useProgram(program);
     gl.uniform2f(u_resolution, canvas.width, canvas.height);
     gl.uniform1f(u_time, time);
+    gl.uniform1f(u_sizeMultiplier, currentConfig.sizeMultiplier);
+    gl.uniform1f(u_lengthMultiplier, currentConfig.lengthMultiplier);
+    gl.uniform1f(u_opacityMultiplier, currentConfig.opacityMultiplier);
 
     gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, MAX_PARTICLES);
 
