@@ -100,8 +100,15 @@ pub fn run() {
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "quit" => app.exit(0),
                     "settings" => {
-                        // We will implement launching the settings window in a moment
-                        println!("Settings clicked");
+                        let _ = tauri::WebviewWindowBuilder::new(
+                            app,
+                            "settings",
+                            tauri::WebviewUrl::App("settings.html".into())
+                        )
+                        .title("CursorTrail Settings")
+                        .inner_size(350.0, 400.0)
+                        .resizable(false)
+                        .build();
                     }
                     _ => {}
                 })
