@@ -85,6 +85,28 @@ pub fn run() {
                 }
             });
             
+            // System tray menu
+            use tauri::menu::{Menu, MenuItem};
+            use tauri::tray::TrayIconBuilder;
+
+            let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>).unwrap();
+            let settings_i = MenuItem::with_id(app, "settings", "Settings", true, None::<&str>).unwrap();
+            let menu = Menu::with_items(app, &[&settings_i, &quit_i]).unwrap();
+            
+            let tray = TrayIconBuilder::new()
+                .icon(app.default_window_icon().unwrap().clone())
+                .menu(&menu)
+                .menu_on_left_click(true)
+                .on_menu_event(|app, event| match event.id.as_ref() {
+                    "quit" => app.exit(0),
+                    "settings" => {
+                        // We will implement launching the settings window in a moment
+                        println!("Settings clicked");
+                    }
+                    _ => {}
+                })
+                .build(app).unwrap();
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![greet])

@@ -214,17 +214,17 @@ async function init() {
     const density = 2.0; // spawn every 2 pixels
     const count = Math.min(Math.ceil(dist / density), 50); // limit burst
 
-    const vx = (x - lastMouse.x) * 5.0;
-    const vy = (y - lastMouse.y) * 5.0;
+    const vx = 0;
+    const vy = 0;
 
     for (let i = 0; i <= count; i++) {
       const t = count === 0 ? 1 : (i / count);
       const px = lastMouse.x + (x - lastMouse.x) * t;
       const py = lastMouse.y + (y - lastMouse.y) * t;
 
-      // Random velocity spread (reduced for tighter alignment)
-      const rx = vx + (Math.random() - 0.5) * 50.0;
-      const ry = vy + (Math.random() - 0.5) * 50.0;
+      // Small random drift floating outwards, completely removing forward translation
+      const rx = (Math.random() - 0.5) * 30.0;
+      const ry = (Math.random() - 0.5) * 30.0;
 
       spawnParticle(px, py, rx, ry, now);
     }
