@@ -171,6 +171,11 @@ async function init() {
   let lastMouse = { x: 0, y: 0 };
   let hasMouse = false;
 
+  let currentTheme = "cyan";
+  listen<{ theme: string }>("style-update", (event) => {
+    currentTheme = event.payload.theme;
+  });
+
   function spawnParticle(x: number, y: number, vx: number, vy: number, t: number) {
     const idx = headIndex * FLOATS_PER_INSTANCE;
 
@@ -181,10 +186,14 @@ async function init() {
     instanceData[idx + 4] = t;
     instanceData[idx + 5] = 800.0; // Math.random() * 500 + 300
 
-    // Theme color (Cyan-ish)
-    instanceData[idx + 6] = 0.0;
-    instanceData[idx + 7] = 0.8;
-    instanceData[idx + 8] = 1.0;
+    let r = 0.0, g = 0.8, b = 1.0;
+    if (currentTheme === "neon") { r = 1.0; g = 0.0; b = 1.0; }
+    else if (currentTheme === "fire") { r = 1.0; g = 0.27; b = 0.0; }
+    else if (currentTheme === "minimal") { r = 1.0; g = 1.0; b = 1.0; }
+
+    instanceData[idx + 6] = r;
+    instanceData[idx + 7] = g;
+    instanceData[idx + 8] = b;
 
     // Direct subset upload for speed
     gl.bindBuffer(gl.ARRAY_BUFFER, instanceBuffer);
@@ -213,9 +222,6 @@ async function init() {
     const dist = Math.hypot(x - lastMouse.x, y - lastMouse.y);
     const density = 2.0; // spawn every 2 pixels
     const count = Math.min(Math.ceil(dist / density), 50); // limit burst
-
-    const vx = 0;
-    const vy = 0;
 
     for (let i = 0; i <= count; i++) {
       const t = count === 0 ? 1 : (i / count);
