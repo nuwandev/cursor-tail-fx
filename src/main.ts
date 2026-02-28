@@ -195,7 +195,13 @@ async function init() {
 
   // Listen to IPC
   listen<[number, number]>("cursor-move", (event) => {
-    const [x, y] = event.payload;
+    const [nx, ny] = event.payload;
+    const canvas = document.getElementById("trail-canvas") as HTMLCanvasElement;
+
+    // Convert normalized [0..1] coordinates directly to canvas physical pixels
+    const x = nx * canvas.width;
+    const y = ny * canvas.height;
+
     const now = performance.now();
 
     if (!hasMouse) {
@@ -220,7 +226,7 @@ async function init() {
       const rx = vx + (Math.random() - 0.5) * 50.0;
       const ry = vy + (Math.random() - 0.5) * 50.0;
 
-      spawnParticle(px * window.devicePixelRatio, py * window.devicePixelRatio, rx, ry, now);
+      spawnParticle(px, py, rx, ry, now);
     }
 
     lastMouse = { x, y };

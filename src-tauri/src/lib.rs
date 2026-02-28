@@ -50,21 +50,33 @@ pub fn run() {
             std::thread::spawn(move || {
                 #[cfg(target_os = "windows")]
                 {
-                    use windows::Win32::UI::WindowsAndMessaging::GetCursorPos;
+                    use windows::Win32::UI::WindowsAndMessaging::{
+                        GetCursorPos, GetSystemMetrics, SM_XVIRTUALSCREEN, 
+                        SM_YVIRTUALSCREEN, SM_CXVIRTUALSCREEN, SM_CYVIRTUALSCREEN
+                    };
                     use windows::Win32::Foundation::POINT;
                     use tauri::Emitter;
                     use std::time::Duration;
 
-                    let mut last_pos = (0, 0);
+                    let mut last_pos = (0.0, 0.0);
 
                     loop {
                         let mut point = POINT::default();
                         unsafe {
                             if GetCursorPos(&mut point).is_ok() {
-                                let current_pos = (point.x, point.y);
-                                if current_pos != last_pos {
-                                    app_handle.emit("cursor-move", current_pos).unwrap_or(());
-                                    last_pos = current_pos;
+                                let offset_x = GetSystemMetrics(SM_XVIRTUALSCREEN);
+                                let offset_y = GetSystemMetrics(SM_YVIRTUALSCREEN);
+                                let cx = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+                                let cy = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+                                if cx > 0 && cy > 0 {
+                                    let nx = (point.x - offset_x) as f64 / cx as f64;
+                                    let ny = (point.y - offset_y) as f64 / cy as f64;
+                                    
+                                    if (nx - last_pos.0).abs() > 0.0001 || (ny - last_pos.1).abs() > 0.0001 {
+                                        app_handle.emit("cursor-move", (nx, ny)).unwrap_or(());
+                                        last_pos = (nx, ny);
+                                    }
                                 }
                             }
                         }
