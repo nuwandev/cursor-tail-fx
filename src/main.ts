@@ -1,5 +1,5 @@
 import { listen } from "@tauri-apps/api/event";
-import { AppConfig, DEFAULT_CONFIG, THEMES } from "./config";
+import { AppConfig, DEFAULT_CONFIG, THEMES, EFFECTS } from "./config";
 
 const VS_SRC = `#version 300 es
 in vec2 a_quadPos;
@@ -13,9 +13,12 @@ uniform vec2 u_resolution;
 uniform float u_time;
 uniform float u_sizeMultiplier;
 uniform float u_lengthMultiplier;
+uniform int u_effect;
 
 out vec4 v_color;
 out vec2 v_uv;
+out float v_age;
+flat out int v_effect;
 
 void main() {
     float age = u_time - i_spawnTime;
@@ -28,13 +31,24 @@ void main() {
     }
     
     vec2 pos = i_position + i_velocity * (age / 1000.0);
-    float size = 15.0 * u_sizeMultiplier * (1.0 - lifeRatio);
+    
+    float size = 15.0 * u_sizeMultiplier;
     float alpha = 1.0 - lifeRatio;
+
+    // Apply Effect Modifiers
+    if (u_effect == 0) { // Comet
+        size *= (1.0 - lifeRatio);
+    } else if (u_effect == 1) { // Sparkle
+        size *= (0.5 + 0.5 * sin(age * 0.02)); // Twinkle size
+        alpha *= (0.5 + 0.5 * sin(age * 0.05)); // Twinkle alpha
+    } else if (u_effect == 2) { // Orb
+        size *= (0.5 + 1.5 * lifeRatio); // Expanding sphere
+    } else if (u_effect == 3) { // Rainbow
+        size *= (1.0 - lifeRatio);
+    }
     
     vec2 finalPos = pos + a_quadPos * size;
     // clipSpace needs to map [0, resolution] to [-1, 1]
-    // X: (x / res.x) * 2 - 1
-    // Y: 1 - (y / res.y) * 2 (because WebGL Y is bottom-to-top, Screen Y is top-to-bottom)
     vec2 clipSpace = vec2(
         (finalPos.x / u_resolution.x) * 2.0 - 1.0,
         1.0 - (finalPos.y / u_resolution.y) * 2.0
@@ -43,6 +57,8 @@ void main() {
     gl_Position = vec4(clipSpace, 0.0, 1.0);
     v_color = vec4(i_color, alpha);
     v_uv = a_quadPos;
+    v_age = age;
+    v_effect = u_effect;
 }
 `;
 
@@ -50,16 +66,36 @@ const FS_SRC = `#version 300 es
 precision mediump float;
 in vec4 v_color;
 in vec2 v_uv;
+in float v_age;
+flat in int v_effect;
 
 uniform float u_opacityMultiplier;
+uniform float u_time;
 
 out vec4 outColor;
+
+vec3 hsv2rgb(vec3 c) {
+    vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+}
 
 void main() {
     float dist = length(v_uv);
     if (dist > 1.0) discard;
+    
     float glow = exp(-dist * 3.0); // Soft exponential fade
-    outColor = vec4(v_color.rgb * v_color.a * glow * u_opacityMultiplier, v_color.a * glow * u_opacityMultiplier);
+    if (v_effect == 2) { // Orb uses a softer, wider glow
+        glow = exp(-dist * 1.5);
+    }
+    
+    vec3 rgb = v_color.rgb;
+    if (v_effect == 3) { // Rainbow shifts hue over time and particle age
+        float hue = fract(u_time * 0.0002 + v_age * 0.001);
+        rgb = hsv2rgb(vec3(hue, 1.0, 1.0));
+    }
+
+    outColor = vec4(rgb * v_color.a * glow * u_opacityMultiplier, v_color.a * glow * u_opacityMultiplier);
 }
 `;
 
@@ -175,6 +211,7 @@ async function init() {
   const u_sizeMultiplier = gl.getUniformLocation(program, "u_sizeMultiplier");
   const u_lengthMultiplier = gl.getUniformLocation(program, "u_lengthMultiplier");
   const u_opacityMultiplier = gl.getUniformLocation(program, "u_opacityMultiplier");
+  const u_effect = gl.getUniformLocation(program, "u_effect");
 
   let headIndex = 0;
   let lastMouse = { x: 0, y: 0 };
@@ -253,6 +290,7 @@ async function init() {
     gl.uniform1f(u_sizeMultiplier, currentConfig.sizeMultiplier);
     gl.uniform1f(u_lengthMultiplier, currentConfig.lengthMultiplier);
     gl.uniform1f(u_opacityMultiplier, currentConfig.opacityMultiplier);
+    gl.uniform1i(u_effect, EFFECTS[currentConfig.effect] ?? 0);
 
     gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, MAX_PARTICLES);
 

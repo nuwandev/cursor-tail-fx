@@ -1,6 +1,7 @@
 // The master configuration object that is synced across the app
 export interface AppConfig {
     theme: "cyan" | "neon" | "fire" | "minimal";
+    effect: "comet" | "sparkle" | "orb" | "rainbow";
     sizeMultiplier: number;     // 0.1 to 3.0
     lengthMultiplier: number;   // 0.1 to 3.0
     opacityMultiplier: number;  // 0.1 to 1.0
@@ -9,9 +10,18 @@ export interface AppConfig {
 // Default configuration
 export const DEFAULT_CONFIG: AppConfig = {
     theme: "cyan",
+    effect: "comet",
     sizeMultiplier: 1.0,
     lengthMultiplier: 1.0,
     opacityMultiplier: 1.0,
+};
+
+// Map of effect names to integer values for the WebGL shader
+export const EFFECTS = {
+    comet: 0,
+    sparkle: 1,
+    orb: 2,
+    rainbow: 3
 };
 
 // Map of themes to their RGB values
