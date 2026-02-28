@@ -103,10 +103,10 @@ pub fn run() {
                         let _ = tauri::WebviewWindowBuilder::new(
                             app,
                             "settings",
-                            tauri::WebviewUrl::App("settings.html".into())
+                            tauri::WebviewUrl::App("src/windows/settings/index.html".into())
                         )
                         .title("CursorTrail Settings")
-                        .inner_size(350.0, 400.0)
+                        .inner_size(350.0, 480.0) // Bumped height for the new UX
                         .resizable(false)
                         .build();
                     }

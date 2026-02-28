@@ -30,8 +30,8 @@ export default defineConfig(async () => ({
   build: {
     rollupOptions: {
       input: {
-        main: new URL('./index.html', import.meta.url).pathname,
-        settings: new URL('./settings.html', import.meta.url).pathname
+        main: new URL('./src/windows/overlay/index.html', import.meta.url).pathname,
+        settings: new URL('./src/windows/settings/index.html', import.meta.url).pathname
       }
     }
   }

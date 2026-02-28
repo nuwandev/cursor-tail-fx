@@ -1,5 +1,5 @@
 import { emit } from "@tauri-apps/api/event";
-import { AppConfig, DEFAULT_CONFIG } from "./config";
+import { AppConfig, DEFAULT_CONFIG } from "../../config";
 
 document.addEventListener("DOMContentLoaded", () => {
     let currentConfig: AppConfig = { ...DEFAULT_CONFIG };

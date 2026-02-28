@@ -1,5 +1,5 @@
 import { listen } from "@tauri-apps/api/event";
-import { AppConfig, DEFAULT_CONFIG, THEMES, EFFECTS } from "./config";
+import { AppConfig, DEFAULT_CONFIG, THEMES, EFFECTS } from "../../config";
 
 const VS_SRC = `#version 300 es
 in vec2 a_quadPos;
