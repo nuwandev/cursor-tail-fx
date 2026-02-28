@@ -17,15 +17,31 @@ pub fn run() {
                 use windows::Win32::Foundation::HWND;
                 use windows::Win32::UI::WindowsAndMessaging::{
                     GetWindowLongW, SetWindowLongW, GWL_EXSTYLE, WS_EX_LAYERED, WS_EX_TRANSPARENT,
+                    GetSystemMetrics, SM_XVIRTUALSCREEN, SM_YVIRTUALSCREEN, SM_CXVIRTUALSCREEN, SM_CYVIRTUALSCREEN,
+                    SetWindowPos, HWND_TOPMOST, SWP_NOZORDER, SWP_NOACTIVATE
                 };
                 let hwnd: HWND = HWND(window.hwnd().unwrap().0 as _);
                 unsafe {
+                    // Make click-through and layered
                     let ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE);
                     SetWindowLongW(
                         hwnd,
                         GWL_EXSTYLE,
                         ex_style | (WS_EX_LAYERED.0 as i32) | (WS_EX_TRANSPARENT.0 as i32),
                     );
+
+                    // Resize to cover all monitors
+                    let x = GetSystemMetrics(SM_XVIRTUALSCREEN);
+                    let y = GetSystemMetrics(SM_YVIRTUALSCREEN);
+                    let cx = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+                    let cy = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+
+                    SetWindowPos(
+                        hwnd,
+                        HWND_TOPMOST,
+                        x, y, cx, cy,
+                        SWP_NOZORDER | SWP_NOACTIVATE
+                    ).unwrap();
                 }
             }
             

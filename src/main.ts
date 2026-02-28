@@ -1,22 +1,240 @@
-import { invoke } from "@tauri-apps/api/core";
+import { listen } from "@tauri-apps/api/event";
 
-let greetInputEl: HTMLInputElement | null;
-let greetMsgEl: HTMLElement | null;
+const VS_SRC = `#version 300 es
+in vec2 a_quadPos;
+in vec2 i_position;
+in vec2 i_velocity;
+in float i_spawnTime;
+in float i_lifeTime;
+in vec3 i_color;
 
-async function greet() {
-  if (greetMsgEl && greetInputEl) {
-    // Learn more about Tauri commands at https://tauri.app/develop/calling-rust/
-    greetMsgEl.textContent = await invoke("greet", {
-      name: greetInputEl.value,
-    });
+uniform vec2 u_resolution;
+uniform float u_time;
+
+out vec4 v_color;
+out vec2 v_uv;
+
+void main() {
+    float age = u_time - i_spawnTime;
+    float lifeRatio = age / i_lifeTime;
+    
+    if (lifeRatio < 0.0 || lifeRatio >= 1.0) {
+        // Hide dead particles
+        gl_Position = vec4(-2.0, -2.0, 0.0, 1.0);
+        return;
+    }
+    
+    vec2 pos = i_position + i_velocity * (age / 1000.0);
+    float size = 15.0 * (1.0 - lifeRatio);
+    float alpha = 1.0 - lifeRatio;
+    
+    vec2 finalPos = pos + a_quadPos * size;
+    vec2 clipSpace = (finalPos / u_resolution) * 2.0 - 1.0;
+    clipSpace.y *= -1.0;
+    
+    gl_Position = vec4(clipSpace, 0.0, 1.0);
+    v_color = vec4(i_color, alpha);
+    v_uv = a_quadPos;
+}
+`;
+
+const FS_SRC = `#version 300 es
+precision mediump float;
+in vec4 v_color;
+in vec2 v_uv;
+out vec4 outColor;
+
+void main() {
+    float dist = length(v_uv);
+    if (dist > 1.0) discard;
+    float glow = exp(-dist * 3.0); // Soft exponential fade
+    outColor = vec4(v_color.rgb * v_color.a * glow, v_color.a * glow);
+}
+`;
+
+function createShader(gl: WebGL2RenderingContext, type: number, source: string) {
+  const shader = gl.createShader(type)!;
+  gl.shaderSource(shader, source);
+  gl.compileShader(shader);
+  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    console.error(gl.getShaderInfoLog(shader));
+    gl.deleteShader(shader);
+    return null;
   }
+  return shader;
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  greetInputEl = document.querySelector("#greet-input");
-  greetMsgEl = document.querySelector("#greet-msg");
-  document.querySelector("#greet-form")?.addEventListener("submit", (e) => {
-    e.preventDefault();
-    greet();
+async function init() {
+  const canvas = document.getElementById("trail-canvas") as HTMLCanvasElement;
+  const gl = canvas.getContext("webgl2", {
+    alpha: true,
+    premultipliedAlpha: true,
+    antialias: false,
+    depth: false
+  }) as WebGL2RenderingContext;
+
+  if (!gl) {
+    console.error("WebGL2 not supported");
+    return;
+  }
+
+  function resize() {
+    canvas.width = window.innerWidth * window.devicePixelRatio;
+    canvas.height = window.innerHeight * window.devicePixelRatio;
+    gl!.viewport(0, 0, canvas.width, canvas.height);
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  const vs = createShader(gl, gl.VERTEX_SHADER, VS_SRC)!;
+  const fs = createShader(gl, gl.FRAGMENT_SHADER, FS_SRC)!;
+  const program = gl.createProgram()!;
+  gl.attachShader(program, vs);
+  gl.attachShader(program, fs);
+  gl.linkProgram(program);
+  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    console.error(gl.getProgramInfoLog(program));
+  }
+
+  gl.useProgram(program);
+
+  // Additive blending for glows
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
+  // Quad Geometry
+  const quadBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
+    -1, -1, 1, -1, -1, 1,
+    -1, 1, 1, -1, 1, 1,
+  ]), gl.STATIC_DRAW);
+
+  const a_quadPos = gl.getAttribLocation(program, "a_quadPos");
+  gl.enableVertexAttribArray(a_quadPos);
+  gl.vertexAttribPointer(a_quadPos, 2, gl.FLOAT, false, 0, 0);
+
+  // Instancing Setup
+  const MAX_PARTICLES = 2000;
+  const FLOATS_PER_INSTANCE = 9; // x, y, vx, vy, spawnTime, lifeTime, r, g, b
+  const instanceData = new Float32Array(MAX_PARTICLES * FLOATS_PER_INSTANCE);
+
+  // Initialize to zero/dead
+  for (let i = 0; i < instanceData.length; i++) {
+    instanceData[i] = 0;
+  }
+
+  const instanceBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, instanceBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, instanceData.byteLength, gl.DYNAMIC_DRAW);
+
+  // Bind attributes
+  const locs = {
+    i_position: gl.getAttribLocation(program, "i_position"),
+    i_velocity: gl.getAttribLocation(program, "i_velocity"),
+    i_spawnTime: gl.getAttribLocation(program, "i_spawnTime"),
+    i_lifeTime: gl.getAttribLocation(program, "i_lifeTime"),
+    i_color: gl.getAttribLocation(program, "i_color")
+  };
+
+  const stride = FLOATS_PER_INSTANCE * 4;
+
+  gl.enableVertexAttribArray(locs.i_position);
+  gl.vertexAttribPointer(locs.i_position, 2, gl.FLOAT, false, stride, 0);
+  gl.vertexAttribDivisor(locs.i_position, 1);
+
+  gl.enableVertexAttribArray(locs.i_velocity);
+  gl.vertexAttribPointer(locs.i_velocity, 2, gl.FLOAT, false, stride, 8);
+  gl.vertexAttribDivisor(locs.i_velocity, 1);
+
+  gl.enableVertexAttribArray(locs.i_spawnTime);
+  gl.vertexAttribPointer(locs.i_spawnTime, 1, gl.FLOAT, false, stride, 16);
+  gl.vertexAttribDivisor(locs.i_spawnTime, 1);
+
+  gl.enableVertexAttribArray(locs.i_lifeTime);
+  gl.vertexAttribPointer(locs.i_lifeTime, 1, gl.FLOAT, false, stride, 20);
+  gl.vertexAttribDivisor(locs.i_lifeTime, 1);
+
+  gl.enableVertexAttribArray(locs.i_color);
+  gl.vertexAttribPointer(locs.i_color, 3, gl.FLOAT, false, stride, 24);
+  gl.vertexAttribDivisor(locs.i_color, 1);
+
+  const u_resolution = gl.getUniformLocation(program, "u_resolution");
+  const u_time = gl.getUniformLocation(program, "u_time");
+
+  let headIndex = 0;
+  let lastMouse = { x: 0, y: 0 };
+  let hasMouse = false;
+
+  function spawnParticle(x: number, y: number, vx: number, vy: number, t: number) {
+    const idx = headIndex * FLOATS_PER_INSTANCE;
+
+    instanceData[idx + 0] = x;
+    instanceData[idx + 1] = y;
+    instanceData[idx + 2] = vx;
+    instanceData[idx + 3] = vy;
+    instanceData[idx + 4] = t;
+    instanceData[idx + 5] = 800.0; // Math.random() * 500 + 300
+
+    // Theme color (Cyan-ish)
+    instanceData[idx + 6] = 0.0;
+    instanceData[idx + 7] = 0.8;
+    instanceData[idx + 8] = 1.0;
+
+    // Direct subset upload for speed
+    gl.bindBuffer(gl.ARRAY_BUFFER, instanceBuffer);
+    gl.bufferSubData(gl.ARRAY_BUFFER, idx * 4, instanceData.subarray(idx, idx + FLOATS_PER_INSTANCE));
+
+    headIndex = (headIndex + 1) % MAX_PARTICLES;
+  }
+
+  // Listen to IPC
+  listen<[number, number]>("cursor-move", (event) => {
+    const [x, y] = event.payload;
+    const now = performance.now();
+
+    if (!hasMouse) {
+      lastMouse = { x, y };
+      hasMouse = true;
+    }
+
+    // Interpolate to fill gaps
+    const dist = Math.hypot(x - lastMouse.x, y - lastMouse.y);
+    const density = 2.0; // spawn every 2 pixels
+    const count = Math.min(Math.ceil(dist / density), 50); // limit burst
+
+    const vx = (x - lastMouse.x) * 5.0;
+    const vy = (y - lastMouse.y) * 5.0;
+
+    for (let i = 0; i <= count; i++) {
+      const t = i / Math.max(count, 1);
+      const px = lastMouse.x + (x - lastMouse.x) * t;
+      const py = lastMouse.y + (y - lastMouse.y) * t;
+
+      // Random velocity spread
+      const rx = vx + (Math.random() - 0.5) * 100.0;
+      const ry = vy + (Math.random() - 0.5) * 100.0;
+
+      spawnParticle(px * window.devicePixelRatio, py * window.devicePixelRatio, rx, ry, now);
+    }
+
+    lastMouse = { x, y };
   });
-});
+
+  function render(time: number) {
+    gl.clearColor(0, 0, 0, 0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.useProgram(program);
+    gl.uniform2f(u_resolution, canvas.width, canvas.height);
+    gl.uniform1f(u_time, time);
+
+    gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, MAX_PARTICLES);
+
+    requestAnimationFrame(render);
+  }
+
+  requestAnimationFrame(render);
+}
+
+document.addEventListener("DOMContentLoaded", init);
