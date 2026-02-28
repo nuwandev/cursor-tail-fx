@@ -29,8 +29,13 @@ void main() {
     float alpha = 1.0 - lifeRatio;
     
     vec2 finalPos = pos + a_quadPos * size;
-    vec2 clipSpace = (finalPos / u_resolution) * 2.0 - 1.0;
-    clipSpace.y *= -1.0;
+    // clipSpace needs to map [0, resolution] to [-1, 1]
+    // X: (x / res.x) * 2 - 1
+    // Y: 1 - (y / res.y) * 2 (because WebGL Y is bottom-to-top, Screen Y is top-to-bottom)
+    vec2 clipSpace = vec2(
+        (finalPos.x / u_resolution.x) * 2.0 - 1.0,
+        1.0 - (finalPos.y / u_resolution.y) * 2.0
+    );
     
     gl_Position = vec4(clipSpace, 0.0, 1.0);
     v_color = vec4(i_color, alpha);
@@ -207,13 +212,13 @@ async function init() {
     const vy = (y - lastMouse.y) * 5.0;
 
     for (let i = 0; i <= count; i++) {
-      const t = i / Math.max(count, 1);
+      const t = count === 0 ? 1 : (i / count);
       const px = lastMouse.x + (x - lastMouse.x) * t;
       const py = lastMouse.y + (y - lastMouse.y) * t;
 
-      // Random velocity spread
-      const rx = vx + (Math.random() - 0.5) * 100.0;
-      const ry = vy + (Math.random() - 0.5) * 100.0;
+      // Random velocity spread (reduced for tighter alignment)
+      const rx = vx + (Math.random() - 0.5) * 50.0;
+      const ry = vy + (Math.random() - 0.5) * 50.0;
 
       spawnParticle(px * window.devicePixelRatio, py * window.devicePixelRatio, rx, ry, now);
     }
