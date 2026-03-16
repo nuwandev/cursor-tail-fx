@@ -13,6 +13,7 @@
     "withGlobalTauri": true,
     "windows": [
       {
+        "url": "src/windows/overlay/index.html",
         "title": "CursorTrail",
         "width": 800,
         "height": 600,
