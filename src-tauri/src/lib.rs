@@ -122,8 +122,8 @@ pub fn run() {
                             tauri::WebviewUrl::App("src/windows/settings/index.html".into())
                         )
                         .title("CursorTrail Settings")
-                        .inner_size(350.0, 480.0) // Bumped height for the new UX
-                        .resizable(false)
+                        .inner_size(850.0, 650.0) // Bumped to cover SaaS UI
+                        .resizable(true)
                         .build();
                     }
                     _ => {}

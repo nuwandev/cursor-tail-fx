@@ -31,3 +31,25 @@ export const THEMES: Record<AppConfig["theme"], { r: number, g: number, b: numbe
     fire: { r: 1.0, g: 0.27, b: 0.0 },
     minimal: { r: 1.0, g: 1.0, b: 1.0 },
 };
+
+const STORAGE_KEY = "cursor-trail-config-v2";
+
+export function loadConfig(): AppConfig {
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            return { ...DEFAULT_CONFIG, ...JSON.parse(saved) };
+        }
+    } catch (e) {
+        console.error("Failed to parse saved config", e);
+    }
+    return { ...DEFAULT_CONFIG };
+}
+
+export function saveConfig(config: AppConfig) {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+    } catch (e) {
+        console.error("Failed to save config", e);
+    }
+}

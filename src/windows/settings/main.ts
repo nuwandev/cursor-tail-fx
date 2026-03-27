@@ -1,82 +1,111 @@
-import { emit } from "@tauri-apps/api/event";
-import { AppConfig, DEFAULT_CONFIG } from "../../config";
+import { emit, listen } from "@tauri-apps/api/event";
+import { AppConfig, DEFAULT_CONFIG, loadConfig, saveConfig } from "../../config";
+
+let currentConfig: AppConfig = loadConfig();
+
+// Input Elements
+const effectRadios = document.querySelectorAll<HTMLInputElement>('input[name="effect"]');
+const themeRadios = document.querySelectorAll<HTMLInputElement>('input[name="theme"]');
+
+const sizeSlider = document.getElementById("size-slider") as HTMLInputElement;
+const lengthSlider = document.getElementById("length-slider") as HTMLInputElement;
+const opacitySlider = document.getElementById("opacity-slider") as HTMLInputElement;
+
+const sizeVal = document.getElementById("size-val") as HTMLDivElement;
+const lengthVal = document.getElementById("length-val") as HTMLDivElement;
+const opacityVal = document.getElementById("opacity-val") as HTMLDivElement;
+
+const resetBtn = document.getElementById("reset-btn") as HTMLButtonElement;
+const navItems = document.querySelectorAll<HTMLLIElement>(".nav-item");
+const tabPanes = document.querySelectorAll<HTMLDivElement>(".tab-pane");
+
+function broadcastUpdate() {
+  saveConfig(currentConfig);
+  emit("config-update", currentConfig);
+}
+
+function initUI() {
+  effectRadios.forEach(r => r.checked = r.value === currentConfig.effect);
+  themeRadios.forEach(r => r.checked = r.value === currentConfig.theme);
+
+  sizeSlider.value = currentConfig.sizeMultiplier.toString();
+  lengthSlider.value = currentConfig.lengthMultiplier.toString();
+  opacitySlider.value = currentConfig.opacityMultiplier.toString();
+
+  updateLabels();
+}
+
+function updateLabels() {
+  sizeVal.innerText = `${currentConfig.sizeMultiplier.toFixed(1)}x`;
+  lengthVal.innerText = `${currentConfig.lengthMultiplier.toFixed(1)}x`;
+  opacityVal.innerText = `${currentConfig.opacityMultiplier.toFixed(1)}x`;
+}
+
+// BINDINGS
+effectRadios.forEach(radio => {
+  radio.addEventListener("change", (e) => {
+    if ((e.target as HTMLInputElement).checked) {
+      currentConfig.effect = (e.target as HTMLInputElement).value as any;
+      broadcastUpdate();
+    }
+  });
+});
+
+themeRadios.forEach(radio => {
+  radio.addEventListener("change", (e) => {
+    if ((e.target as HTMLInputElement).checked) {
+      currentConfig.theme = (e.target as HTMLInputElement).value as any;
+      broadcastUpdate();
+    }
+  });
+});
+
+sizeSlider.addEventListener("input", (e) => {
+  currentConfig.sizeMultiplier = parseFloat((e.target as HTMLInputElement).value);
+  updateLabels();
+});
+sizeSlider.addEventListener("change", () => broadcastUpdate());
+
+lengthSlider.addEventListener("input", (e) => {
+  currentConfig.lengthMultiplier = parseFloat((e.target as HTMLInputElement).value);
+  updateLabels();
+});
+lengthSlider.addEventListener("change", () => broadcastUpdate());
+
+opacitySlider.addEventListener("input", (e) => {
+  currentConfig.opacityMultiplier = parseFloat((e.target as HTMLInputElement).value);
+  updateLabels();
+});
+opacitySlider.addEventListener("change", () => broadcastUpdate());
+
+// Tabs
+navItems.forEach(item => {
+  item.addEventListener("click", () => {
+    navItems.forEach(n => n.classList.remove("active"));
+    tabPanes.forEach(t => t.classList.remove("active"));
+
+    item.classList.add("active");
+    const target = item.getAttribute("data-target");
+    if (target) {
+      document.getElementById(target)?.classList.add("active");
+    }
+  });
+});
+
+// Reset
+resetBtn.addEventListener("click", () => {
+  currentConfig = { ...DEFAULT_CONFIG };
+  initUI();
+  broadcastUpdate();
+});
+
+// Sync from changes that might happen externally
+listen<AppConfig>("config-update", (event) => {
+  currentConfig = event.payload;
+  initUI();
+});
 
 document.addEventListener("DOMContentLoaded", () => {
-    let currentConfig: AppConfig = { ...DEFAULT_CONFIG };
-
-    const emitConfig = async () => {
-        await emit("config-update", currentConfig);
-    };
-
-    // Tab Navigation
-    const tabs = document.querySelectorAll<HTMLDivElement>(".tab");
-    const contents = document.querySelectorAll<HTMLDivElement>(".tab-content");
-
-    tabs.forEach(tab => {
-        tab.addEventListener("click", () => {
-            tabs.forEach(t => t.classList.remove("active"));
-            contents.forEach(c => c.classList.remove("active"));
-
-            tab.classList.add("active");
-            const target = document.getElementById(tab.getAttribute("data-target")!);
-            if (target) {
-                target.classList.add("active");
-            }
-        });
-    });
-
-    // --- Looks Tab ---
-    // Theme Buttons
-    const themeBtns = document.querySelectorAll<HTMLButtonElement>(".theme-btn");
-    themeBtns.forEach(btn => {
-        btn.addEventListener("click", () => {
-            themeBtns.forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-
-            currentConfig.theme = btn.getAttribute("data-theme") as AppConfig["theme"];
-            emitConfig();
-        });
-    });
-
-    // Effect Buttons
-    const effectBtns = document.querySelectorAll<HTMLButtonElement>(".effect-btn");
-    effectBtns.forEach(btn => {
-        btn.addEventListener("click", () => {
-            effectBtns.forEach(b => b.classList.remove("active"));
-            btn.classList.add("active");
-
-            currentConfig.effect = btn.getAttribute("data-effect") as AppConfig["effect"];
-            emitConfig();
-        });
-    });
-
-
-    // --- Tuning Tab ---
-    // Sliders
-    const opacitySlider = document.getElementById("opacity") as HTMLInputElement;
-    const opacityVal = document.getElementById("opacity-val") as HTMLSpanElement;
-    opacitySlider.addEventListener("input", (e) => {
-        const val = parseFloat((e.target as HTMLInputElement).value);
-        opacityVal.textContent = `${Math.round(val * 100)}%`;
-        currentConfig.opacityMultiplier = val;
-        emitConfig();
-    });
-
-    const lengthSlider = document.getElementById("length") as HTMLInputElement;
-    const lengthVal = document.getElementById("length-val") as HTMLSpanElement;
-    lengthSlider.addEventListener("input", (e) => {
-        const val = parseFloat((e.target as HTMLInputElement).value);
-        lengthVal.textContent = `${val.toFixed(1)}x`;
-        currentConfig.lengthMultiplier = val;
-        emitConfig();
-    });
-
-    const sizeSlider = document.getElementById("size") as HTMLInputElement;
-    const sizeVal = document.getElementById("size-val") as HTMLSpanElement;
-    sizeSlider.addEventListener("input", (e) => {
-        const val = parseFloat((e.target as HTMLInputElement).value);
-        sizeVal.textContent = `${val.toFixed(1)}x`;
-        currentConfig.sizeMultiplier = val;
-        emitConfig();
-    });
+    broadcastUpdate();
+    initUI();
 });

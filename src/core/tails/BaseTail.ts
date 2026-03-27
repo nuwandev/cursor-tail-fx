@@ -1,33 +1,32 @@
-import { AppConfig, DEFAULT_CONFIG, THEMES, EFFECTS } from "../config";
-import { VS_SRC, FS_SRC } from "./shaders";
+import { AppConfig, DEFAULT_CONFIG, THEMES } from "../../config";
 
-const MAX_PARTICLES = 2000;
-const FLOATS_PER_INSTANCE = 9; // x, y, vx, vy, spawnTime, lifeTime, r, g, b
+export const MAX_PARTICLES = 2000;
+export const FLOATS_PER_INSTANCE = 9; // x, y, vx, vy, spawnTime, lifeTime, r, g, b
 
-export class TrailEngine {
-    private gl: WebGL2RenderingContext;
-    private program: WebGLProgram;
-    private canvas: HTMLCanvasElement;
+export abstract class BaseTail {
+    protected gl: WebGL2RenderingContext;
+    protected program: WebGLProgram;
+    protected canvas: HTMLCanvasElement;
 
-    private instanceBuffer: WebGLBuffer;
-    private instanceData: Float32Array;
-    private headIndex: number = 0;
+    protected instanceBuffer: WebGLBuffer;
+    protected instanceData: Float32Array;
+    protected headIndex: number = 0;
 
-    // Performance State
-    private isRendering: boolean = true;
-    private lastParticleTime: number = 0;
+    protected isRendering: boolean = true;
+    protected lastParticleTime: number = 0;
 
-    private config: AppConfig = { ...DEFAULT_CONFIG };
+    protected config: AppConfig = { ...DEFAULT_CONFIG };
 
-    // Uniform Locations
-    private locs = {
+    protected locs = {
         u_resolution: null as WebGLUniformLocation | null,
         u_time: null as WebGLUniformLocation | null,
         u_sizeMultiplier: null as WebGLUniformLocation | null,
         u_lengthMultiplier: null as WebGLUniformLocation | null,
         u_opacityMultiplier: null as WebGLUniformLocation | null,
-        u_effect: null as WebGLUniformLocation | null,
     };
+
+    protected quadBuffer: WebGLBuffer;
+    protected vao: WebGLVertexArrayObject;
 
     constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
@@ -38,18 +37,14 @@ export class TrailEngine {
             depth: false
         }) as WebGL2RenderingContext;
 
-        if (!gl) {
-            throw new Error("WebGL2 not supported");
-        }
+        if (!gl) throw new Error("WebGL2 not supported");
         this.gl = gl;
 
-        // Resize Hook
         window.addEventListener("resize", this.resize.bind(this));
         this.resize();
 
-        // Shaders
-        const vs = this.createShader(gl.VERTEX_SHADER, VS_SRC)!;
-        const fs = this.createShader(gl.FRAGMENT_SHADER, FS_SRC)!;
+        const vs = this.createShader(gl.VERTEX_SHADER, this.getVertexShader())!;
+        const fs = this.createShader(gl.FRAGMENT_SHADER, this.getFragmentShader())!;
         this.program = gl.createProgram()!;
         gl.attachShader(this.program, vs);
         gl.attachShader(this.program, fs);
@@ -57,16 +52,21 @@ export class TrailEngine {
         if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
             console.error(gl.getProgramInfoLog(this.program));
         }
+        // Cleanup shaders after linkage
+        gl.deleteShader(vs);
+        gl.deleteShader(fs);
 
         gl.useProgram(this.program);
-
-        // Blending
         gl.enable(gl.BLEND);
         gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
+        // Setup VAO to isolate attribute state between tails!
+        this.vao = gl.createVertexArray()!;
+        gl.bindVertexArray(this.vao);
+
         // Quad
-        const quadBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer);
+        this.quadBuffer = gl.createBuffer()!;
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([
             -1, -1, 1, -1, -1, 1,
             -1, 1, 1, -1, 1, 1,
@@ -78,6 +78,12 @@ export class TrailEngine {
 
         // Instances
         this.instanceData = new Float32Array(MAX_PARTICLES * FLOATS_PER_INSTANCE);
+        // Initialize with dead particles
+        for(let i=0; i<MAX_PARTICLES; i++) {
+            this.instanceData[i*FLOATS_PER_INSTANCE + 4] = -99999.0; 
+            this.instanceData[i*FLOATS_PER_INSTANCE + 5] = 1.0; 
+        }
+
         this.instanceBuffer = gl.createBuffer()!;
         gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, this.instanceData.byteLength, gl.DYNAMIC_DRAW);
@@ -85,6 +91,7 @@ export class TrailEngine {
         const stride = FLOATS_PER_INSTANCE * 4;
         const setupAttrib = (name: string, size: number, offset: number) => {
             const loc = gl.getAttribLocation(this.program, name);
+            if(loc === -1) return;
             gl.enableVertexAttribArray(loc);
             gl.vertexAttribPointer(loc, size, gl.FLOAT, false, stride, offset);
             gl.vertexAttribDivisor(loc, 1);
@@ -96,17 +103,26 @@ export class TrailEngine {
         setupAttrib("i_lifeTime", 1, 20);
         setupAttrib("i_color", 3, 24);
 
-        // Uniforms
+        // Unbind VAO for safety
+        gl.bindVertexArray(null);
+
         this.locs.u_resolution = gl.getUniformLocation(this.program, "u_resolution");
         this.locs.u_time = gl.getUniformLocation(this.program, "u_time");
         this.locs.u_sizeMultiplier = gl.getUniformLocation(this.program, "u_sizeMultiplier");
         this.locs.u_lengthMultiplier = gl.getUniformLocation(this.program, "u_lengthMultiplier");
         this.locs.u_opacityMultiplier = gl.getUniformLocation(this.program, "u_opacityMultiplier");
-        this.locs.u_effect = gl.getUniformLocation(this.program, "u_effect");
+        
+        this.setupCustomUniforms();
 
         this.render = this.render.bind(this);
         requestAnimationFrame(this.render);
     }
+
+    protected abstract getVertexShader(): string;
+    protected abstract getFragmentShader(): string;
+    
+    protected setupCustomUniforms(): void {}
+    protected applyCustomUniforms(_time: number): void {}
 
     private resize() {
         this.canvas.width = window.innerWidth * window.devicePixelRatio;
@@ -132,21 +148,18 @@ export class TrailEngine {
 
     public spawnParticle(x: number, y: number, vx: number, vy: number, t: number) {
         this.lastParticleTime = t;
-
-        // Wake up loop if sleeping
         if (!this.isRendering) {
             this.isRendering = true;
             this.render(performance.now());
         }
 
         const idx = this.headIndex * FLOATS_PER_INSTANCE;
-
         this.instanceData[idx + 0] = x;
         this.instanceData[idx + 1] = y;
         this.instanceData[idx + 2] = vx;
         this.instanceData[idx + 3] = vy;
         this.instanceData[idx + 4] = t;
-        this.instanceData[idx + 5] = 800.0; // Lifetime
+        this.instanceData[idx + 5] = 800.0; // Base Lifetime
 
         const themeColor = THEMES[this.config.theme] || THEMES.cyan;
         this.instanceData[idx + 6] = themeColor.r;
@@ -163,8 +176,6 @@ export class TrailEngine {
     private render(time: number) {
         if (!this.isRendering) return;
 
-        // Sleep if no particles have been spawned for 3.0 seconds
-        // (Allows all existing particles time to fade away and die cleanly)
         if (time - this.lastParticleTime > 3000) {
             this.gl.clearColor(0, 0, 0, 0);
             this.gl.clear(this.gl.COLOR_BUFFER_BIT);
@@ -177,15 +188,34 @@ export class TrailEngine {
         gl.clear(gl.COLOR_BUFFER_BIT);
 
         gl.useProgram(this.program);
-        gl.uniform2f(this.locs.u_resolution, this.canvas.width, this.canvas.height);
-        gl.uniform1f(this.locs.u_time, time);
-        gl.uniform1f(this.locs.u_sizeMultiplier, this.config.sizeMultiplier);
-        gl.uniform1f(this.locs.u_lengthMultiplier, this.config.lengthMultiplier);
-        gl.uniform1f(this.locs.u_opacityMultiplier, this.config.opacityMultiplier);
-        gl.uniform1i(this.locs.u_effect, EFFECTS[this.config.effect] ?? 0);
+        if(this.locs.u_resolution) gl.uniform2f(this.locs.u_resolution, this.canvas.width, this.canvas.height);
+        if(this.locs.u_time) gl.uniform1f(this.locs.u_time, time);
+        if(this.locs.u_sizeMultiplier) gl.uniform1f(this.locs.u_sizeMultiplier, this.config.sizeMultiplier);
+        if(this.locs.u_lengthMultiplier) gl.uniform1f(this.locs.u_lengthMultiplier, this.config.lengthMultiplier);
+        if(this.locs.u_opacityMultiplier) gl.uniform1f(this.locs.u_opacityMultiplier, this.config.opacityMultiplier);
 
+        this.applyCustomUniforms(time);
+
+        gl.bindVertexArray(this.vao);
         gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, MAX_PARTICLES);
+        gl.bindVertexArray(null);
 
         requestAnimationFrame(this.render);
+    }
+
+    public destroy() {
+        this.isRendering = false;
+        
+        // Clean up WebGL resources to prevent crashes on high-frequency tail switching
+        if (this.program) this.gl.deleteProgram(this.program);
+        if (this.instanceBuffer) this.gl.deleteBuffer(this.instanceBuffer);
+        if (this.quadBuffer) this.gl.deleteBuffer(this.quadBuffer);
+        if (this.vao) {
+            this.gl.bindVertexArray(null);
+            this.gl.deleteVertexArray(this.vao);
+        }
+        
+        this.gl.clearColor(0, 0, 0, 0);
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
     }
 }
