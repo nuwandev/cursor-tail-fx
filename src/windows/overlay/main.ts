@@ -1,10 +1,10 @@
 import { listen } from "@tauri-apps/api/event";
-import { AppConfig, loadConfig } from "../../config";
+import { AppConfig, loadConfigSafe, validateConfig } from "../../config";
 import { BaseTail } from "../../core/tails/BaseTail";
 import { getTailSafe } from "../../core/tails";
 
 let currentTail: BaseTail | null = null;
-let currentConfig: AppConfig = loadConfig();
+let currentConfig: AppConfig = loadConfigSafe();
 
 function createTail(effect: string, canvas: HTMLCanvasElement): BaseTail {
   const TailClass = getTailSafe(effect);
@@ -24,7 +24,7 @@ async function init() {
 
     // Listen to Configuration Updates
     listen<AppConfig>("config-update", (event) => {
-      const newConfig = event.payload;
+      const newConfig = validateConfig(event.payload);
 
       // If effect completely changed, we need to swap the tail engine
       if (newConfig.effect !== currentConfig.effect) {

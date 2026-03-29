@@ -2,12 +2,13 @@ import { emit, listen } from "@tauri-apps/api/event";
 import {
   AppConfig,
   DEFAULT_CONFIG,
-  loadConfig,
+  loadConfigSafe,
   saveConfig,
+  validateConfig,
 } from "../../config";
 import { getAllTails } from "../../core/tails";
 
-let currentConfig: AppConfig = loadConfig();
+let currentConfig: AppConfig = loadConfigSafe();
 
 // Dynamic tail effect UI
 const effectCards = document.getElementById("effect-cards") as HTMLDivElement;
@@ -166,7 +167,7 @@ resetBtn.addEventListener("click", () => {
 
 // Sync from changes that might happen externally
 listen<AppConfig>("config-update", (event) => {
-  currentConfig = event.payload;
+  currentConfig = validateConfig(event.payload);
   initUI();
 });
 
