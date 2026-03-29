@@ -1,3 +1,11 @@
+import type { TailClass } from "./index";
+
+export interface TailMeta {
+    id: string;
+    name: string;
+    description: string;
+    class: TailClass;
+}
 import { AppConfig, DEFAULT_CONFIG, THEMES } from "../../config";
 
 export const MAX_PARTICLES = 2000;
