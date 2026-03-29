@@ -8,8 +8,9 @@ export function validateConfig(config: any): AppConfig {
       config.theme === "minimal"
         ? config.theme
         : DEFAULT_CONFIG.theme,
-    effect:
-      config.effect in TailRegistry ? config.effect : DEFAULT_CONFIG.effect,
+    effect: TailRegistry.some((t) => t.id === config.effect)
+      ? config.effect
+      : DEFAULT_CONFIG.effect,
     sizeMultiplier:
       typeof config.sizeMultiplier === "number" &&
       Number.isFinite(config.sizeMultiplier)
