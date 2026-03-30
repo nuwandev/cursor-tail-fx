@@ -1,4 +1,4 @@
-import { listen, emit, UnlistenFn } from "@tauri-apps/api/event";
+import { listen, emit } from "@tauri-apps/api/event";
 import { Events } from "../contracts/events";
 import type { AppConfig } from "../core/config";
 

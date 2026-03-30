@@ -1,5 +1,5 @@
 import { onCursorMove, onConfigUpdate } from "../../tauri/events";
-import { loadConfig, DefaultConfig } from "../../core/config";
+import { loadConfig } from "../../core/config";
 import { Renderer } from "../../core/rendering/Renderer";
 
 async function init() {

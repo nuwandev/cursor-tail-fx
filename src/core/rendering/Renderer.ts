@@ -1,4 +1,4 @@
-import { AppConfig, DefaultConfig, normalizeConfig } from "../config";
+import { AppConfig, normalizeConfig } from "../config";
 import { getTailSafe } from "../tails";
 import { TailEngine } from "../tails/TailEngine";
 import type { BaseTail } from "../tails/BaseTail";
@@ -45,12 +45,12 @@ export class Renderer {
 
   handleConfigUpdate(newConfig: AppConfig) {
     const normalized = normalizeConfig(newConfig);
-    if (normalized.tailId !== this.config.tailId) {
-      this.config = normalized;
-      this.initTail(normalized.tailId);
-    } else {
+    if (normalized.tailId === this.config.tailId) {
       this.config = normalized;
       this.engine?.updateConfig(this.config);
+    } else {
+      this.config = normalized;
+      this.initTail(normalized.tailId);
     }
   }
 
