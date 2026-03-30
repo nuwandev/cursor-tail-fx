@@ -1,36 +1,8 @@
 import { emit, listen } from "@tauri-apps/api/event";
-import {
-  AppConfig,
-  DEFAULT_CONFIG,
-  loadConfigSafe,
-  saveConfig,
-  validateConfig,
-} from "../../config";
+import { DefaultConfig, loadConfig, saveConfig } from "../../core/config";
 import { getAllTails } from "../../core/tails";
 
-let currentConfig: AppConfig = loadConfigSafe();
-
-// Dynamic tail effect UI
-const effectCards = document.getElementById("effect-cards") as HTMLDivElement;
-const themeRadios = document.querySelectorAll<HTMLInputElement>(
-  'input[name="theme"]',
-);
-
-const sizeSlider = document.getElementById("size-slider") as HTMLInputElement;
-const lengthSlider = document.getElementById(
-  "length-slider",
-) as HTMLInputElement;
-const opacitySlider = document.getElementById(
-  "opacity-slider",
-) as HTMLInputElement;
-
-const sizeVal = document.getElementById("size-val") as HTMLDivElement;
-const lengthVal = document.getElementById("length-val") as HTMLDivElement;
-const opacityVal = document.getElementById("opacity-val") as HTMLDivElement;
-
-const resetBtn = document.getElementById("reset-btn") as HTMLButtonElement;
-const navItems = document.querySelectorAll<HTMLLIElement>(".nav-item");
-const tabPanes = document.querySelectorAll<HTMLDivElement>(".tab-pane");
+let currentConfig = loadConfig();
 
 function broadcastUpdate() {
   saveConfig(currentConfig);
@@ -44,19 +16,19 @@ function renderEffectCards() {
     // Outer label
     const label = document.createElement("label");
     label.className =
-      "radio-card" + (tail.id === currentConfig.effect ? " selected" : "");
+      "radio-card" + (tail.id === currentConfig.tailId ? " selected" : "");
 
     // Radio input
     const input = document.createElement("input");
     input.type = "radio";
-    input.name = "effect";
+    input.name = "tailId";
     input.value = tail.id;
     input.id = `effect-radio-${tail.id}`;
-    if (tail.id === currentConfig.effect) input.checked = true;
+    if (tail.id === currentConfig.tailId) input.checked = true;
 
     input.addEventListener("change", (e) => {
       if ((e.target as HTMLInputElement).checked) {
-        currentConfig.effect = tail.id as typeof currentConfig.effect;
+        currentConfig.tailId = tail.id;
         broadcastUpdate();
         renderEffectCards(); // re-render to update selected style
       }
@@ -94,9 +66,27 @@ function renderEffectCards() {
   });
 }
 
+const effectCards = document.getElementById("effect-cards") as HTMLDivElement;
+const themeRadios = document.querySelectorAll<HTMLInputElement>(
+  'input[name="theme"]',
+);
+const sizeSlider = document.getElementById("size-slider") as HTMLInputElement;
+const lengthSlider = document.getElementById(
+  "length-slider",
+) as HTMLInputElement;
+const opacitySlider = document.getElementById(
+  "opacity-slider",
+) as HTMLInputElement;
+const sizeVal = document.getElementById("size-val") as HTMLDivElement;
+const lengthVal = document.getElementById("length-val") as HTMLDivElement;
+const opacityVal = document.getElementById("opacity-val") as HTMLDivElement;
+const resetBtn = document.getElementById("reset-btn") as HTMLButtonElement;
+const navItems = document.querySelectorAll<HTMLLIElement>(".nav-item");
+const tabPanes = document.querySelectorAll<HTMLDivElement>(".tab-pane");
+
 function initUI() {
   renderEffectCards();
-  themeRadios.forEach((r) => (r.checked = r.value === currentConfig.theme));
+  themeRadios.forEach((r) => (r.checked = r.value === currentConfig.themeId));
 
   sizeSlider.value = currentConfig.sizeMultiplier.toString();
   lengthSlider.value = currentConfig.lengthMultiplier.toString();
@@ -114,7 +104,7 @@ function updateLabels() {
 themeRadios.forEach((radio) => {
   radio.addEventListener("change", (e) => {
     if ((e.target as HTMLInputElement).checked) {
-      currentConfig.theme = (e.target as HTMLInputElement).value as any;
+      currentConfig.themeId = (e.target as HTMLInputElement).value as any;
       broadcastUpdate();
     }
   });
@@ -160,14 +150,18 @@ navItems.forEach((item) => {
 
 // Reset
 resetBtn.addEventListener("click", () => {
-  currentConfig = { ...DEFAULT_CONFIG };
+  currentConfig = { ...DefaultConfig };
   initUI();
   broadcastUpdate();
 });
 
 // Sync from changes that might happen externally
-listen<AppConfig>("config-update", (event) => {
-  currentConfig = validateConfig(event.payload);
+listen("config-update", (event) => {
+  const payload =
+    typeof event.payload === "object" && event.payload !== null
+      ? event.payload
+      : {};
+  currentConfig = { ...DefaultConfig, ...payload };
   initUI();
 });
 

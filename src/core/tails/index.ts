@@ -69,6 +69,6 @@ export function getAllTails(): TailMeta[] {
 }
 
 // Get a tail class by string, fallback to CometTail if not found (safe for prod)
-export function getTailSafe(effect: string): TailClass {
-  return TailRegistry.find((t) => t.id === effect)?.class || CometTail;
+export function getTailSafe(tailId: string): TailClass {
+  return TailRegistry.find((t) => t.id === tailId)?.class || CometTail;
 }

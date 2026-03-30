@@ -1,15 +1,21 @@
 import { listen } from "@tauri-apps/api/event";
-import { AppConfig, loadConfigSafe, validateConfig } from "../../config";
+import { loadConfig, DefaultConfig } from "../../core/config";
 import { getTailSafe } from "../../core/tails";
 import { TailEngine } from "../../core/tails/TailEngine";
 
 let currentEngine: TailEngine | null = null;
-let currentConfig: AppConfig = loadConfigSafe();
+let currentConfig = loadConfig();
 
-function createEngine(effect: string, canvas: HTMLCanvasElement): TailEngine {
-  const TailClass = getTailSafe(effect);
+function createEngine(tailId: string, canvas: HTMLCanvasElement): TailEngine {
+  const TailClass = getTailSafe(tailId);
   const tail = new TailClass(canvas);
-  tail.updateConfig(currentConfig);
+  // Map config to legacy shape if needed
+  const legacyConfig = {
+    ...currentConfig,
+    effect: currentConfig.tailId,
+    theme: currentConfig.themeId,
+  };
+  tail.updateConfig(legacyConfig);
   return new TailEngine(tail);
 }
 
@@ -18,16 +24,26 @@ async function init() {
     const canvas = document.getElementById("trail-canvas") as HTMLCanvasElement;
     if (!canvas) throw new Error("Could not find trail-canvas element");
 
-    currentEngine = createEngine(currentConfig.effect, canvas);
+    currentEngine = createEngine(currentConfig.tailId, canvas);
 
     // Listen to Configuration Updates
-    listen<AppConfig>("config-update", (event) => {
-      const newConfig = validateConfig(event.payload);
-      if (newConfig.effect === currentConfig.effect) {
-        currentEngine?.updateConfig(newConfig);
+    listen("config-update", (event) => {
+      const payload =
+        typeof event.payload === "object" && event.payload !== null
+          ? event.payload
+          : {};
+      const newConfig = { ...DefaultConfig, ...payload };
+      if (newConfig.tailId === currentConfig.tailId) {
+        // Map config to legacy shape if needed
+        const legacyConfig = {
+          ...newConfig,
+          effect: newConfig.tailId,
+          theme: newConfig.themeId,
+        };
+        currentEngine?.updateConfig(legacyConfig);
       } else {
         if (currentEngine) currentEngine.destroy();
-        currentEngine = createEngine(newConfig.effect, canvas);
+        currentEngine = createEngine(newConfig.tailId, canvas);
       }
       currentConfig = newConfig;
     });
