@@ -1,4 +1,5 @@
 import { listen } from "@tauri-apps/api/event";
+import { Events } from "../../contracts/events";
 import { loadConfig, DefaultConfig } from "../../core/config";
 import { getTailSafe } from "../../core/tails";
 import { TailEngine } from "../../core/tails/TailEngine";
@@ -27,7 +28,7 @@ async function init() {
     currentEngine = createEngine(currentConfig.tailId, canvas);
 
     // Listen to Configuration Updates
-    listen("config-update", (event) => {
+    listen(Events.ConfigUpdate, (event) => {
       const payload =
         typeof event.payload === "object" && event.payload !== null
           ? event.payload
@@ -49,7 +50,7 @@ async function init() {
     });
 
     // Listen to IPC Mouse Move
-    listen<[number, number]>("cursor-move", (event) => {
+    listen<[number, number]>(Events.CursorMove, (event) => {
       const [nx, ny] = event.payload;
       currentEngine?.updateMouse(nx * canvas.width, ny * canvas.height);
     });

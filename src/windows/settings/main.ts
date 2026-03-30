@@ -1,12 +1,13 @@
 import { emit, listen } from "@tauri-apps/api/event";
 import { DefaultConfig, loadConfig, saveConfig } from "../../core/config";
+import { Events } from "../../contracts/events";
 import { getAllTails } from "../../core/tails";
 
 let currentConfig = loadConfig();
 
 function broadcastUpdate() {
   saveConfig(currentConfig);
-  emit("config-update", currentConfig);
+  emit(Events.ConfigUpdate, currentConfig);
 }
 
 function renderEffectCards() {
@@ -95,9 +96,9 @@ function renderThemeSwatches() {
     const swatch = document.createElement("div");
     swatch.className = "swatch";
     const [r, g, b] = theme.rgb;
-    const color = `rgb(${Math.round(r*255)}, ${Math.round(g*255)}, ${Math.round(b*255)})`;
+    const color = `rgb(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)})`;
     swatch.style.background = color;
-    swatch.style.boxShadow = `0 0 12px rgba(${Math.round(r*255)}, ${Math.round(g*255)}, ${Math.round(b*255)}, 0.4)`;
+    swatch.style.boxShadow = `0 0 12px rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, 0.4)`;
     swatchWrapper.appendChild(swatch);
 
     const name = document.createElement("span");
@@ -184,7 +185,7 @@ resetBtn.addEventListener("click", () => {
 });
 
 // Sync from changes that might happen externally
-listen("config-update", (event) => {
+listen(Events.ConfigUpdate, (event) => {
   const payload =
     typeof event.payload === "object" && event.payload !== null
       ? event.payload
