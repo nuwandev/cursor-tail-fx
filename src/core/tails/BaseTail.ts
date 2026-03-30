@@ -52,8 +52,9 @@ export abstract class BaseTail {
     window.addEventListener("resize", this.resize.bind(this));
     this.resize();
 
-    const vs = this.createShader(gl.VERTEX_SHADER, this.getVertexShader())!;
-    const fs = this.createShader(gl.FRAGMENT_SHADER, this.getFragmentShader())!;
+    const { vertex, fragment } = this.getShaders();
+    const vs = this.createShader(gl.VERTEX_SHADER, vertex)!;
+    const fs = this.createShader(gl.FRAGMENT_SHADER, fragment)!;
     this.program = gl.createProgram()!;
     gl.attachShader(this.program, vs);
     gl.attachShader(this.program, fs);
@@ -144,8 +145,16 @@ export abstract class BaseTail {
     requestAnimationFrame(this.render);
   }
 
-  protected abstract getVertexShader(): string;
-  protected abstract getFragmentShader(): string;
+  /**
+   * Subclasses must provide their vertex and fragment shader source.
+   */
+  public abstract getShaders(): { vertex: string; fragment: string };
+
+  /**
+   * Subclasses must implement effect-specific per-frame logic here.
+   * This is called once per frame, before rendering.
+   */
+  public abstract updateEffect(dt: number): void;
 
   // Optionally overridden in subclasses
   protected setupCustomUniforms(): void {

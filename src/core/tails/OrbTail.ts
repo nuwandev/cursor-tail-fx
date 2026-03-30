@@ -1,8 +1,9 @@
 import { BaseTail } from "./BaseTail";
 
 export class OrbTail extends BaseTail {
-    protected getVertexShader(): string {
-        return `#version 300 es
+  public getShaders() {
+    return {
+      vertex: `#version 300 es
 in vec2 a_quadPos;
 in vec2 i_position;
 in vec2 i_velocity;
@@ -45,11 +46,8 @@ void main() {
     v_color = vec4(i_color, alpha);
     v_uv = a_quadPos;
 }
-`;
-    }
-
-    protected getFragmentShader(): string {
-        return `#version 300 es
+`,
+      fragment: `#version 300 es
 precision mediump float;
 in vec4 v_color;
 in vec2 v_uv;
@@ -66,6 +64,11 @@ void main() {
     float glow = exp(-dist * 1.5);
     outColor = vec4(v_color.rgb * v_color.a * glow * u_opacityMultiplier, v_color.a * glow * u_opacityMultiplier);
 }
-`;
-    }
+`,
+    };
+  }
+
+  public updateEffect(_dt: number): void {
+    // OrbTail-specific per-frame logic (if any)
+  }
 }
