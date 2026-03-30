@@ -22,11 +22,11 @@ export const DefaultConfig: AppConfig = {
 };
 
 function isValidTailId(id: string): boolean {
-  return TailRegistry.some(t => t.id === id);
+  return TailRegistry.some((t) => t.id === id);
 }
 
 function isValidThemeId(id: string): boolean {
-  return ThemeRegistry.some(t => t.id === id);
+  return ThemeRegistry.some((t) => t.id === id);
 }
 
 function clamp(val: number, min: number, max: number): number {
@@ -34,13 +34,26 @@ function clamp(val: number, min: number, max: number): number {
 }
 
 export function normalizeConfig(input: any): AppConfig {
-  const merged = { ...DefaultConfig, ...(typeof input === "object" && input !== null ? input : {}) };
-  const tailId = isValidTailId(merged.tailId) ? merged.tailId : DefaultConfig.tailId;
-  const themeId = isValidThemeId(merged.themeId) ? merged.themeId : DefaultConfig.themeId;
+  const merged = {
+    ...DefaultConfig,
+    ...(typeof input === "object" && input !== null ? input : {}),
+  };
+  const tailId = isValidTailId(merged.tailId)
+    ? merged.tailId
+    : DefaultConfig.tailId;
+  const themeId = isValidThemeId(merged.themeId)
+    ? merged.themeId
+    : DefaultConfig.themeId;
   const sizeMultiplier = clamp(Number(merged.sizeMultiplier), 0.1, 5);
   const lengthMultiplier = clamp(Number(merged.lengthMultiplier), 0.1, 5);
   const opacityMultiplier = clamp(Number(merged.opacityMultiplier), 0.1, 5);
-  return { tailId, themeId, sizeMultiplier, lengthMultiplier, opacityMultiplier };
+  return {
+    tailId,
+    themeId,
+    sizeMultiplier,
+    lengthMultiplier,
+    opacityMultiplier,
+  };
 }
 
 export function loadConfig(): AppConfig {
