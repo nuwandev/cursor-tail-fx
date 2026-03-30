@@ -1,25 +1,32 @@
-import { emit, listen } from "@tauri-apps/api/event";
-import { DefaultConfig, loadConfig, saveConfig } from "../../core/config";
-import { Events } from "../../contracts/events";
+import { DefaultConfig, loadConfig, saveConfig, normalizeConfig } from "../../core/config";
+import { emitConfigUpdate, onConfigUpdate } from "../../tauri/events";
 import { getAllTails } from "../../core/tails";
 
 let currentConfig = loadConfig();
 
 function broadcastUpdate() {
   saveConfig(currentConfig);
-  emit(Events.ConfigUpdate, currentConfig);
+  console.log("[settings] Emitting config-update", currentConfig);
+  emitConfigUpdate(currentConfig);
+}
 }
 
-function renderEffectCards() {
   effectCards.innerHTML = "";
   const tails = getAllTails();
+  // Always normalize config before using
+  currentConfig = normalizeConfig(currentConfig);
+  let selectedId = tails.some(t => t.id === currentConfig.tailId)
+    ? currentConfig.tailId
+    : tails[0].id;
+  if (selectedId !== currentConfig.tailId) {
+    currentConfig.tailId = selectedId;
+    broadcastUpdate();
+  }
   tails.forEach((tail) => {
-    // Outer label
     const label = document.createElement("label");
     label.className =
       "radio-card" + (tail.id === currentConfig.tailId ? " selected" : "");
 
-    // Radio input
     const input = document.createElement("input");
     input.type = "radio";
     input.name = "tailId";
@@ -29,22 +36,19 @@ function renderEffectCards() {
 
     input.addEventListener("change", (e) => {
       if ((e.target as HTMLInputElement).checked) {
-        currentConfig.tailId = tail.id as typeof currentConfig.tailId;
+        currentConfig.tailId = tail.id;
         broadcastUpdate();
-        renderEffectCards(); // re-render to update selected style
+        renderEffectCards();
       }
     });
 
-    // Card content
     const cardContent = document.createElement("div");
     cardContent.className = "card-content";
 
-    // Icon (placeholder SVG, can be customized per tail in future)
     const icon = document.createElement("div");
     icon.className = "icon";
     icon.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17a10 10 0 0 0-20 0"></path><path d="M6 17a6 6 0 0 1 12 0"></path><path d="M10 17a2 2 0 0 1 4 0"></path></svg>`;
 
-    // Info
     const info = document.createElement("div");
     info.className = "card-info";
 
@@ -68,6 +72,7 @@ function renderEffectCards() {
 }
 
 const effectCards = document.getElementById("effect-cards") as HTMLDivElement;
+  renderEffectCards();
 import { ThemeRegistry } from "../../core/config/themes";
 
 function renderThemeSwatches() {
@@ -185,12 +190,8 @@ resetBtn.addEventListener("click", () => {
 });
 
 // Sync from changes that might happen externally
-listen(Events.ConfigUpdate, (event) => {
-  const payload =
-    typeof event.payload === "object" && event.payload !== null
-      ? event.payload
-      : {};
-  currentConfig = { ...DefaultConfig, ...payload };
+onConfigUpdate((config) => {
+  currentConfig = normalizeConfig(config);
   initUI();
 });
 

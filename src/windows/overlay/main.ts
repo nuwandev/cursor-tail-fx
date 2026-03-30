@@ -1,59 +1,30 @@
-import { listen } from "@tauri-apps/api/event";
-import { Events } from "../../contracts/events";
+import { onCursorMove, onConfigUpdate } from "../../tauri/events";
 import { loadConfig, DefaultConfig } from "../../core/config";
-import { getTailSafe } from "../../core/tails";
-import { TailEngine } from "../../core/tails/TailEngine";
-
-let currentEngine: TailEngine | null = null;
-let currentConfig = loadConfig();
-
-function createEngine(tailId: string, canvas: HTMLCanvasElement): TailEngine {
-  const TailClass = getTailSafe(tailId);
-  const tail = new TailClass(canvas);
-  // Map config to legacy shape if needed
-  const legacyConfig = {
-    ...currentConfig,
-    effect: currentConfig.tailId,
-    theme: currentConfig.themeId,
-  };
-  tail.updateConfig(legacyConfig);
-  return new TailEngine(tail);
-}
+import { Renderer } from "../../core/rendering/Renderer";
 
 async function init() {
   try {
     const canvas = document.getElementById("trail-canvas") as HTMLCanvasElement;
     if (!canvas) throw new Error("Could not find trail-canvas element");
 
-    currentEngine = createEngine(currentConfig.tailId, canvas);
+    const renderer = new Renderer(canvas, loadConfig());
 
-    // Listen to Configuration Updates
-    listen(Events.ConfigUpdate, (event) => {
-      const payload =
-        typeof event.payload === "object" && event.payload !== null
-          ? event.payload
-          : {};
-      const newConfig = { ...DefaultConfig, ...payload };
-      if (newConfig.tailId === currentConfig.tailId) {
-        // Map config to legacy shape if needed
-        const legacyConfig = {
-          ...newConfig,
-          effect: newConfig.tailId,
-          theme: newConfig.themeId,
-        };
-        currentEngine?.updateConfig(legacyConfig);
-      } else {
-        if (currentEngine) currentEngine.destroy();
-        currentEngine = createEngine(newConfig.tailId, canvas);
+    onConfigUpdate((config) => {
+      renderer.handleConfigUpdate(config);
+    });
+
+    let cursorEventReceived = false;
+    onCursorMove((nx, ny) => {
+      cursorEventReceived = true;
+      console.log("cursor event", nx, ny);
+      console.log("canvas size", canvas.width, canvas.height);
+      renderer.handleMouseMove(nx, ny);
+    });
+    setTimeout(() => {
+      if (!cursorEventReceived) {
+        console.warn("No cursor events received — check backend emission");
       }
-      currentConfig = newConfig;
-    });
-
-    // Listen to IPC Mouse Move
-    listen<[number, number]>(Events.CursorMove, (event) => {
-      const [nx, ny] = event.payload;
-      currentEngine?.updateMouse(nx * canvas.width, ny * canvas.height);
-    });
+    }, 2000);
   } catch (err) {
     console.error("CRITICAL OVERLAY ERROR:", err);
   }
