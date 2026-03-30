@@ -9,8 +9,7 @@ function broadcastUpdate() {
   console.log("[settings] Emitting config-update", currentConfig);
   emitConfigUpdate(currentConfig);
 }
-}
-
+function renderEffectCards() {
   effectCards.innerHTML = "";
   const tails = getAllTails();
   // Always normalize config before using
@@ -72,7 +71,7 @@ function broadcastUpdate() {
 }
 
 const effectCards = document.getElementById("effect-cards") as HTMLDivElement;
-  renderEffectCards();
+renderEffectCards();
 import { ThemeRegistry } from "../../core/config/themes";
 
 function renderThemeSwatches() {
@@ -90,7 +89,7 @@ function renderThemeSwatches() {
 
     input.addEventListener("change", (e) => {
       if ((e.target as HTMLInputElement).checked) {
-        currentConfig.themeId = theme.id as typeof currentConfig.themeId;
+        currentConfig.themeId = theme.id;
         broadcastUpdate();
         renderThemeSwatches();
       }

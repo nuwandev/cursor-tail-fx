@@ -9,14 +9,35 @@ export type TailClass = new (canvas: HTMLCanvasElement) => BaseTail;
 export type TailMeta = {
   id: string;
   name: string;
+  description: string;
   class: TailClass;
 };
 
 export const TailRegistry = [
-  { id: "comet", name: "Comet", class: CometTail },
-  { id: "sparkle", name: "Sparkle", class: SparkleTail },
-  { id: "orb", name: "Orb", class: OrbTail },
-  { id: "rainbow", name: "Rainbow", class: RainbowTail },
+  {
+    id: "comet",
+    name: "Comet",
+    description: "A comet-like trail",
+    class: CometTail,
+  },
+  {
+    id: "sparkle",
+    name: "Sparkle",
+    description: "Sparkly particle effect",
+    class: SparkleTail,
+  },
+  {
+    id: "orb",
+    name: "Orb",
+    description: "Floating orb effect",
+    class: OrbTail,
+  },
+  {
+    id: "rainbow",
+    name: "Rainbow",
+    description: "Colorful rainbow trail",
+    class: RainbowTail,
+  },
 ] as const;
 
 export type TailId = (typeof TailRegistry)[number]["id"];
