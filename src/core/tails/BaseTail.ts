@@ -157,9 +157,18 @@ export abstract class BaseTail {
   }
 
   private resize() {
-    this.canvas.width = window.innerWidth * window.devicePixelRatio;
-    this.canvas.height = window.innerHeight * window.devicePixelRatio;
-    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    const dpr = window.devicePixelRatio || 1;
+    // Always match the window size for overlay
+    const displayWidth = window.innerWidth * dpr;
+    const displayHeight = window.innerHeight * dpr;
+    if (
+      this.canvas.width !== displayWidth ||
+      this.canvas.height !== displayHeight
+    ) {
+      this.canvas.width = displayWidth;
+      this.canvas.height = displayHeight;
+      this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    }
   }
 
   private createShader(type: number, source: string) {
