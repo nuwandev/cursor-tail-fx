@@ -28,7 +28,7 @@ function renderEffectCards() {
 
     input.addEventListener("change", (e) => {
       if ((e.target as HTMLInputElement).checked) {
-        currentConfig.tailId = tail.id;
+        currentConfig.tailId = tail.id as typeof currentConfig.tailId;
         broadcastUpdate();
         renderEffectCards(); // re-render to update selected style
       }
@@ -67,9 +67,48 @@ function renderEffectCards() {
 }
 
 const effectCards = document.getElementById("effect-cards") as HTMLDivElement;
-const themeRadios = document.querySelectorAll<HTMLInputElement>(
-  'input[name="theme"]',
-);
+import { ThemeRegistry } from "../../core/config/themes";
+
+function renderThemeSwatches() {
+  const swatches = document.getElementById("theme-swatches") as HTMLDivElement;
+  swatches.innerHTML = "";
+  ThemeRegistry.forEach((theme) => {
+    const label = document.createElement("label");
+    label.className = "swatch-container";
+
+    const input = document.createElement("input");
+    input.type = "radio";
+    input.name = "theme";
+    input.value = theme.id;
+    if (theme.id === currentConfig.themeId) input.checked = true;
+
+    input.addEventListener("change", (e) => {
+      if ((e.target as HTMLInputElement).checked) {
+        currentConfig.themeId = theme.id as typeof currentConfig.themeId;
+        broadcastUpdate();
+        renderThemeSwatches();
+      }
+    });
+
+    const swatchWrapper = document.createElement("div");
+    swatchWrapper.className = "swatch-wrapper";
+    const swatch = document.createElement("div");
+    swatch.className = "swatch";
+    const [r, g, b] = theme.rgb;
+    const color = `rgb(${Math.round(r*255)}, ${Math.round(g*255)}, ${Math.round(b*255)})`;
+    swatch.style.background = color;
+    swatch.style.boxShadow = `0 0 12px rgba(${Math.round(r*255)}, ${Math.round(g*255)}, ${Math.round(b*255)}, 0.4)`;
+    swatchWrapper.appendChild(swatch);
+
+    const name = document.createElement("span");
+    name.textContent = theme.name;
+
+    label.appendChild(input);
+    label.appendChild(swatchWrapper);
+    label.appendChild(name);
+    swatches.appendChild(label);
+  });
+}
 const sizeSlider = document.getElementById("size-slider") as HTMLInputElement;
 const lengthSlider = document.getElementById(
   "length-slider",
@@ -86,12 +125,10 @@ const tabPanes = document.querySelectorAll<HTMLDivElement>(".tab-pane");
 
 function initUI() {
   renderEffectCards();
-  themeRadios.forEach((r) => (r.checked = r.value === currentConfig.themeId));
-
+  renderThemeSwatches();
   sizeSlider.value = currentConfig.sizeMultiplier.toString();
   lengthSlider.value = currentConfig.lengthMultiplier.toString();
   opacitySlider.value = currentConfig.opacityMultiplier.toString();
-
   updateLabels();
 }
 
@@ -100,15 +137,6 @@ function updateLabels() {
   lengthVal.innerText = `${currentConfig.lengthMultiplier.toFixed(1)}x`;
   opacityVal.innerText = `${currentConfig.opacityMultiplier.toFixed(1)}x`;
 }
-
-themeRadios.forEach((radio) => {
-  radio.addEventListener("change", (e) => {
-    if ((e.target as HTMLInputElement).checked) {
-      currentConfig.themeId = (e.target as HTMLInputElement).value as any;
-      broadcastUpdate();
-    }
-  });
-});
 
 sizeSlider.addEventListener("input", (e) => {
   currentConfig.sizeMultiplier = Number.parseFloat(

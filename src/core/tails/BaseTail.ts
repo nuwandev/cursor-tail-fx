@@ -7,7 +7,7 @@ export interface TailMeta {
   class: TailClass;
 }
 import { AppConfig, DefaultConfig } from "../config/index";
-import { THEMES } from "../../config/index";
+import { getThemeById } from "../config/themes";
 
 export const MAX_PARTICLES = 2000;
 export const FLOATS_PER_INSTANCE = 9; // x, y, vx, vy, spawnTime, lifeTime, r, g, b
@@ -148,9 +148,13 @@ export abstract class BaseTail {
   protected abstract getFragmentShader(): string;
 
   // Optionally overridden in subclasses
-  protected setupCustomUniforms(): void { /* intentionally empty */ }
+  protected setupCustomUniforms(): void {
+    /* intentionally empty */
+  }
   // Optionally overridden in subclasses
-  protected applyCustomUniforms(_time: number): void { /* intentionally empty */ }
+  protected applyCustomUniforms(_time: number): void {
+    /* intentionally empty */
+  }
 
   private resize() {
     this.canvas.width = window.innerWidth * window.devicePixelRatio;
@@ -195,10 +199,11 @@ export abstract class BaseTail {
     this.instanceData[idx + 4] = t;
     this.instanceData[idx + 5] = 800; // Base Lifetime
 
-    const themeColor = THEMES[this.config.themeId] || THEMES.cyan;
-    this.instanceData[idx + 6] = themeColor.r;
-    this.instanceData[idx + 7] = themeColor.g;
-    this.instanceData[idx + 8] = themeColor.b;
+    const theme = getThemeById(this.config.themeId) || getThemeById("cyan");
+    const [r, g, b] = theme ? theme.rgb : [0, 0.8, 1];
+    this.instanceData[idx + 6] = r;
+    this.instanceData[idx + 7] = g;
+    this.instanceData[idx + 8] = b;
 
     const gl = this.gl;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer);
