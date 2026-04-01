@@ -26,6 +26,9 @@ export abstract class BaseTail {
   protected program: WebGLProgram;
   protected canvas: HTMLCanvasElement;
 
+  // Keep a stable reference so removeEventListener works (no leaks on tail switch)
+  private readonly boundResize = this.onResize.bind(this);
+
   protected instanceBuffer: WebGLBuffer;
   protected instanceData: Float32Array;
   protected headIndex: number = 0;
@@ -81,7 +84,7 @@ export abstract class BaseTail {
     // Cache theme color from the initial config
     this.cacheThemeColor();
 
-    window.addEventListener("resize", this.onResize.bind(this));
+    window.addEventListener("resize", this.boundResize);
     this.applyResize();
 
     const { vertex, fragment } = this.getShaders();
@@ -331,7 +334,7 @@ export abstract class BaseTail {
       this.resizeTimer = null;
     }
 
-    window.removeEventListener("resize", this.onResize.bind(this));
+    window.removeEventListener("resize", this.boundResize);
 
     // Release all WebGL resources — critical for tail switching without memory leaks
     if (this.program) this.gl.deleteProgram(this.program);
