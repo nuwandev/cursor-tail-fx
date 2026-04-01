@@ -5,11 +5,14 @@ import { getThemeById } from "@/shared/config/themes";
 export const MAX_PARTICLES = 1000;
 export const FLOATS_PER_INSTANCE = 9; // x, y, vx, vy, spawnTime, lifeTime, r, g, b
 
-// Cap devicePixelRatio at 1.5 — on 4K/HiDPI screens this saves ~56% GPU pixels
-// with zero visible quality difference for a glow trail effect
+// Cap devicePixelRatio at 1.5 — saves ~56% GPU pixels on HiDPI with no visible difference
 const MAX_DPR = 1.5;
 
-// Target 60fps — trail effects don't benefit from higher refresh rates
+// Hard cap on canvas pixel dimensions — prevents enormous framebuffers on
+// multi-monitor or 4K setups. 1920×1080 is plenty for a glow/trail effect.
+const MAX_CANVAS_PX = 1920;
+
+// Target 60fps — trail effects gain nothing from higher refresh rates
 const TARGET_FRAME_MS = 1000 / 60;
 
 // Stop rendering 1.5s after last particle (was 3s — trail is fully faded by then)
@@ -64,8 +67,12 @@ export abstract class BaseTail {
       premultipliedAlpha: true,
       antialias: false,
       depth: false,
-      // Hint to driver: we don't need to read pixels back
       preserveDrawingBuffer: false,
+      // Prefer integrated GPU — saves discrete GPU usage for a simple glow effect.
+      // On laptops/desktops with both iGPU and dGPU this can cut GPU% in half.
+      powerPreference: "low-power",
+      // Decouple canvas updates from display vsync — reduces compositor overhead.
+      desynchronized: true,
     }) as WebGL2RenderingContext;
 
     if (!gl) throw new Error("WebGL2 not supported");
@@ -188,10 +195,18 @@ export abstract class BaseTail {
   }
 
   private applyResize(): void {
-    // Cap DPR to MAX_DPR — HiDPI screens get no visible benefit above this for glows
+    // Cap DPR and apply a hard pixel cap to prevent massive framebuffers.
+    // On a 3-monitor 4K setup the virtual canvas could be 11520×2160 = ~94MB
+    // of GPU memory just for one framebuffer — completely unnecessary for trails.
     const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
-    const displayWidth = Math.floor(window.innerWidth * dpr);
-    const displayHeight = Math.floor(window.innerHeight * dpr);
+    const rawW = Math.floor(window.innerWidth * dpr);
+    const rawH = Math.floor(window.innerHeight * dpr);
+
+    // Scale down proportionally if either dimension exceeds the cap
+    const scale = Math.min(1, MAX_CANVAS_PX / Math.max(rawW, rawH));
+    const displayWidth = Math.floor(rawW * scale);
+    const displayHeight = Math.floor(rawH * scale);
+
     if (this.canvas.width !== displayWidth || this.canvas.height !== displayHeight) {
       this.canvas.width = displayWidth;
       this.canvas.height = displayHeight;
