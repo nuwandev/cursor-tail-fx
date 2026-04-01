@@ -27,7 +27,8 @@ export class Renderer {
     }
     try {
       this.tail = new TailClass(this.canvas, this.config);
-    } catch {
+    } catch (e) {
+      console.error("FAILING TO INSTANTIATE TAIL:", e);
       // fallback to comet if instantiation fails
       TailClass = getTailSafe("comet");
       this.tail = new TailClass(this.canvas, this.config);
