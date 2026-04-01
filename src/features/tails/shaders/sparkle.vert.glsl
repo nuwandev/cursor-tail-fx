@@ -1,10 +1,4 @@
-import { BaseTail } from "./BaseTail";
-import { registerTail } from "./registry";
-
-export class SparkleTail extends BaseTail {
-  public getShaders() {
-    return {
-      vertex: `#version 300 es
+#version 300 es
 in vec2 a_quadPos;
 in vec2 i_position;
 in vec2 i_velocity;
@@ -48,35 +42,3 @@ void main() {
     v_color = vec4(i_color, alpha);
     v_uv = a_quadPos;
 }
-`,
-      fragment: `#version 300 es
-precision mediump float;
-in vec4 v_color;
-in vec2 v_uv;
-
-uniform float u_opacityMultiplier;
-
-out vec4 outColor;
-
-void main() {
-    float dist = length(v_uv);
-    if (dist > 1.0) discard;
-    
-    float glow = exp(-dist * 3.0); 
-    outColor = vec4(v_color.rgb * v_color.a * glow * u_opacityMultiplier, v_color.a * glow * u_opacityMultiplier);
-}
-`,
-    };
-  }
-
-  public updateEffect(_dt: number): void {
-    // SparkleTail-specific per-frame logic (if any)
-  }
-}
-
-registerTail({
-  id: "sparkle",
-  name: "Sparkle",
-  description: "Sparkly particle effect",
-  class: SparkleTail,
-});

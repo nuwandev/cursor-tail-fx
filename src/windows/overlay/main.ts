@@ -1,6 +1,6 @@
-import { onCursorMove, onConfigUpdate } from "../../tauri/events";
-import { loadConfig } from "../../core/config";
-import { Renderer } from "../../core/rendering/Renderer";
+import { onCursorMove, onConfigUpdate } from "@/shared/ipc/events";
+import { loadConfig } from "@/shared/config";
+import { Renderer } from "@/features/tails/Renderer";
 
 async function init() {
   try {

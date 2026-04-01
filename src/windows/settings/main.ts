@@ -1,6 +1,7 @@
-import { DefaultConfig, loadConfig, saveConfig, normalizeConfig } from "../../core/config";
-import { emitConfigUpdate, onConfigUpdate } from "../../tauri/events";
-import { getAllTails } from "../../core/tails";
+import { DefaultConfig, loadConfig, saveConfig, normalizeConfig } from "@/shared/config";
+import { emitConfigUpdate, onConfigUpdate } from "@/shared/ipc/events";
+import { getAllTails } from "@/features/tails";
+import { ThemeRegistry } from "@/shared/config/themes";
 
 let currentConfig = loadConfig();
 
@@ -14,7 +15,7 @@ function renderEffectCards() {
   const tails = getAllTails();
   // Always normalize config before using
   currentConfig = normalizeConfig(currentConfig);
-  let selectedId = tails.some(t => t.id === currentConfig.tailId)
+  let selectedId = tails.some((t) => t.id === currentConfig.tailId)
     ? currentConfig.tailId
     : tails[0].id;
   if (selectedId !== currentConfig.tailId) {
@@ -23,8 +24,7 @@ function renderEffectCards() {
   }
   tails.forEach((tail) => {
     const label = document.createElement("label");
-    label.className =
-      "radio-card" + (tail.id === currentConfig.tailId ? " selected" : "");
+    label.className = "radio-card" + (tail.id === currentConfig.tailId ? " selected" : "");
 
     const input = document.createElement("input");
     input.type = "radio";
@@ -72,7 +72,6 @@ function renderEffectCards() {
 
 const effectCards = document.getElementById("effect-cards") as HTMLDivElement;
 renderEffectCards();
-import { ThemeRegistry } from "../../core/config/themes";
 
 function renderThemeSwatches() {
   const swatches = document.getElementById("theme-swatches") as HTMLDivElement;
@@ -115,12 +114,8 @@ function renderThemeSwatches() {
   });
 }
 const sizeSlider = document.getElementById("size-slider") as HTMLInputElement;
-const lengthSlider = document.getElementById(
-  "length-slider",
-) as HTMLInputElement;
-const opacitySlider = document.getElementById(
-  "opacity-slider",
-) as HTMLInputElement;
+const lengthSlider = document.getElementById("length-slider") as HTMLInputElement;
+const opacitySlider = document.getElementById("opacity-slider") as HTMLInputElement;
 const sizeVal = document.getElementById("size-val") as HTMLDivElement;
 const lengthVal = document.getElementById("length-val") as HTMLDivElement;
 const opacityVal = document.getElementById("opacity-val") as HTMLDivElement;
@@ -144,25 +139,19 @@ function updateLabels() {
 }
 
 sizeSlider.addEventListener("input", (e) => {
-  currentConfig.sizeMultiplier = Number.parseFloat(
-    (e.target as HTMLInputElement).value,
-  );
+  currentConfig.sizeMultiplier = Number.parseFloat((e.target as HTMLInputElement).value);
   updateLabels();
 });
 sizeSlider.addEventListener("change", () => broadcastUpdate());
 
 lengthSlider.addEventListener("input", (e) => {
-  currentConfig.lengthMultiplier = Number.parseFloat(
-    (e.target as HTMLInputElement).value,
-  );
+  currentConfig.lengthMultiplier = Number.parseFloat((e.target as HTMLInputElement).value);
   updateLabels();
 });
 lengthSlider.addEventListener("change", () => broadcastUpdate());
 
 opacitySlider.addEventListener("input", (e) => {
-  currentConfig.opacityMultiplier = Number.parseFloat(
-    (e.target as HTMLInputElement).value,
-  );
+  currentConfig.opacityMultiplier = Number.parseFloat((e.target as HTMLInputElement).value);
   updateLabels();
 });
 opacitySlider.addEventListener("change", () => broadcastUpdate());

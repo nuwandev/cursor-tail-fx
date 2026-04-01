@@ -1,10 +1,4 @@
-// Centralized theme contract for cursor-tail
-
-export interface ThemeMeta {
-  id: string;
-  name: string;
-  rgb: [number, number, number];
-}
+import type { ThemeMeta, ThemeId } from "@/types";
 
 export const ThemeRegistry: ThemeMeta[] = [
   { id: "cyan", name: "Cyan", rgb: [0, 0.8, 1] },
@@ -14,8 +8,10 @@ export const ThemeRegistry: ThemeMeta[] = [
   { id: "minimal", name: "Minimal", rgb: [1, 1, 1] },
 ];
 
-export type ThemeId = (typeof ThemeRegistry)[number]["id"];
-
 export function getThemeById(id: ThemeId): ThemeMeta | undefined {
   return ThemeRegistry.find((t) => t.id === id);
+}
+
+export function getAllThemes(): ThemeMeta[] {
+  return ThemeRegistry;
 }

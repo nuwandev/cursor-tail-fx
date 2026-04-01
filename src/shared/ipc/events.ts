@@ -1,7 +1,6 @@
 import { listen, emit } from "@tauri-apps/api/event";
-import { Events } from "../contracts/events";
-import type { AppConfig } from "../core/config";
-
+import { Events } from "@/types";
+import type { AppConfig } from "@/types";
 export function onCursorMove(callback: (nx: number, ny: number) => void): void {
   listen<[number, number]>(Events.CursorMove, (event) => {
     console.log("[events.ts] cursor-move event received:", event.payload);

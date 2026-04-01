@@ -1,7 +1,8 @@
-import { AppConfig, normalizeConfig } from "../config";
-import { getTailSafe } from "../tails";
-import { TailEngine } from "../tails/TailEngine";
-import type { BaseTail } from "../tails/BaseTail";
+import { normalizeConfig } from "@/shared/config";
+import type { AppConfig } from "@/types";
+import { getTailSafe } from "@/features/tails";
+import { TailEngine } from "@/features/tails/TailEngine";
+import type { BaseTail } from "@/features/tails/BaseTail";
 
 export class Renderer {
   private readonly canvas: HTMLCanvasElement;
@@ -33,8 +34,8 @@ export class Renderer {
       TailClass = getTailSafe("comet");
       this.tail = new TailClass(this.canvas, this.config);
     }
-    this.tail.updateConfig(this.config);
-    this.engine = new TailEngine(this.tail);
+    this.tail!.updateConfig(this.config);
+    this.engine = new TailEngine(this.tail!);
   }
 
   handleMouseMove(nx: number, ny: number) {

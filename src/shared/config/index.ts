@@ -1,17 +1,6 @@
-// Centralized config contract for cursor-tail
-
-// Use string directly for TailId and ThemeId for now
-
-import { getTailById } from "../tails";
+import { getTailById } from "@/features/tails";
 import { ThemeRegistry } from "./themes";
-
-export interface AppConfig {
-  tailId: string;
-  themeId: string;
-  sizeMultiplier: number;
-  lengthMultiplier: number;
-  opacityMultiplier: number;
-}
+import type { AppConfig } from "@/types";
 
 export const DefaultConfig: AppConfig = {
   tailId: "comet",
@@ -38,12 +27,8 @@ export function normalizeConfig(input: any): AppConfig {
     ...DefaultConfig,
     ...(typeof input === "object" && input !== null ? input : {}),
   };
-  const tailId = isValidTailId(merged.tailId)
-    ? merged.tailId
-    : DefaultConfig.tailId;
-  const themeId = isValidThemeId(merged.themeId)
-    ? merged.themeId
-    : DefaultConfig.themeId;
+  const tailId = isValidTailId(merged.tailId) ? merged.tailId : DefaultConfig.tailId;
+  const themeId = isValidThemeId(merged.themeId) ? merged.themeId : DefaultConfig.themeId;
   const sizeMultiplier = clamp(Number(merged.sizeMultiplier), 0.1, 5);
   const lengthMultiplier = clamp(Number(merged.lengthMultiplier), 0.1, 5);
   const opacityMultiplier = clamp(Number(merged.opacityMultiplier), 0.1, 5);

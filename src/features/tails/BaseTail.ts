@@ -1,13 +1,5 @@
-import type { TailClass } from "./index";
-
-export interface TailMeta {
-  id: string;
-  name: string;
-  description: string;
-  class: TailClass;
-}
-import { AppConfig } from "../config/index";
-import { getThemeById } from "../config/themes";
+import { AppConfig } from "@/types";
+import { getThemeById } from "@/shared/config/themes";
 
 export const MAX_PARTICLES = 2000;
 export const FLOATS_PER_INSTANCE = 9; // x, y, vx, vy, spawnTime, lifeTime, r, g, b
@@ -98,11 +90,7 @@ export abstract class BaseTail {
 
     this.instanceBuffer = gl.createBuffer()!;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer);
-    gl.bufferData(
-      gl.ARRAY_BUFFER,
-      this.instanceData.byteLength,
-      gl.DYNAMIC_DRAW,
-    );
+    gl.bufferData(gl.ARRAY_BUFFER, this.instanceData.byteLength, gl.DYNAMIC_DRAW);
 
     const stride = FLOATS_PER_INSTANCE * 4;
     const setupAttrib = (name: string, size: number, offset: number) => {
@@ -122,23 +110,11 @@ export abstract class BaseTail {
     // Unbind VAO for safety
     gl.bindVertexArray(null);
 
-    this.locs.u_resolution = gl.getUniformLocation(
-      this.program,
-      "u_resolution",
-    );
+    this.locs.u_resolution = gl.getUniformLocation(this.program, "u_resolution");
     this.locs.u_time = gl.getUniformLocation(this.program, "u_time");
-    this.locs.u_sizeMultiplier = gl.getUniformLocation(
-      this.program,
-      "u_sizeMultiplier",
-    );
-    this.locs.u_lengthMultiplier = gl.getUniformLocation(
-      this.program,
-      "u_lengthMultiplier",
-    );
-    this.locs.u_opacityMultiplier = gl.getUniformLocation(
-      this.program,
-      "u_opacityMultiplier",
-    );
+    this.locs.u_sizeMultiplier = gl.getUniformLocation(this.program, "u_sizeMultiplier");
+    this.locs.u_lengthMultiplier = gl.getUniformLocation(this.program, "u_lengthMultiplier");
+    this.locs.u_opacityMultiplier = gl.getUniformLocation(this.program, "u_opacityMultiplier");
 
     this.setupCustomUniforms();
 
@@ -171,10 +147,7 @@ export abstract class BaseTail {
     // Always match the window size for overlay
     const displayWidth = window.innerWidth * dpr;
     const displayHeight = window.innerHeight * dpr;
-    if (
-      this.canvas.width !== displayWidth ||
-      this.canvas.height !== displayHeight
-    ) {
+    if (this.canvas.width !== displayWidth || this.canvas.height !== displayHeight) {
       this.canvas.width = displayWidth;
       this.canvas.height = displayHeight;
       this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
@@ -197,13 +170,7 @@ export abstract class BaseTail {
     this.config = config;
   }
 
-  public spawnParticle(
-    x: number,
-    y: number,
-    vx: number,
-    vy: number,
-    t: number,
-  ) {
+  public spawnParticle(x: number, y: number, vx: number, vy: number, t: number) {
     this.lastParticleTime = t;
     if (!this.isRendering) {
       this.isRendering = true;
@@ -251,21 +218,14 @@ export abstract class BaseTail {
 
     gl.useProgram(this.program);
     if (this.locs.u_resolution)
-      gl.uniform2f(
-        this.locs.u_resolution,
-        this.canvas.width,
-        this.canvas.height,
-      );
+      gl.uniform2f(this.locs.u_resolution, this.canvas.width, this.canvas.height);
     if (this.locs.u_time) gl.uniform1f(this.locs.u_time, time);
     if (this.locs.u_sizeMultiplier)
       gl.uniform1f(this.locs.u_sizeMultiplier, this.config.sizeMultiplier);
     if (this.locs.u_lengthMultiplier)
       gl.uniform1f(this.locs.u_lengthMultiplier, this.config.lengthMultiplier);
     if (this.locs.u_opacityMultiplier)
-      gl.uniform1f(
-        this.locs.u_opacityMultiplier,
-        this.config.opacityMultiplier,
-      );
+      gl.uniform1f(this.locs.u_opacityMultiplier, this.config.opacityMultiplier);
 
     this.applyCustomUniforms(time);
 
