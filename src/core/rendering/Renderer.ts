@@ -26,11 +26,11 @@ export class Renderer {
       TailClass = getTailSafe("comet");
     }
     try {
-      this.tail = new TailClass(this.canvas);
+      this.tail = new TailClass(this.canvas, this.config);
     } catch {
       // fallback to comet if instantiation fails
       TailClass = getTailSafe("comet");
-      this.tail = new TailClass(this.canvas);
+      this.tail = new TailClass(this.canvas, this.config);
     }
     this.tail.updateConfig(this.config);
     this.engine = new TailEngine(this.tail);

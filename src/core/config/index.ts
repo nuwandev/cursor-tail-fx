@@ -2,7 +2,7 @@
 
 // Use string directly for TailId and ThemeId for now
 
-import { TailRegistry } from "../tails";
+import { getTailById } from "../tails";
 import { ThemeRegistry } from "./themes";
 
 export interface AppConfig {
@@ -22,7 +22,7 @@ export const DefaultConfig: AppConfig = {
 };
 
 function isValidTailId(id: string): boolean {
-  return TailRegistry.some((t) => t.id === id);
+  return getTailById(id) !== undefined;
 }
 
 function isValidThemeId(id: string): boolean {

@@ -6,7 +6,7 @@ export interface TailMeta {
   description: string;
   class: TailClass;
 }
-import { AppConfig, DefaultConfig } from "../config/index";
+import { AppConfig } from "../config/index";
 import { getThemeById } from "../config/themes";
 
 export const MAX_PARTICLES = 2000;
@@ -24,7 +24,7 @@ export abstract class BaseTail {
   protected isRendering: boolean = true;
   protected lastParticleTime: number = 0;
 
-  protected config: AppConfig = { ...DefaultConfig };
+  protected config: AppConfig;
 
   protected locs = {
     u_resolution: null as WebGLUniformLocation | null,
@@ -37,8 +37,9 @@ export abstract class BaseTail {
   protected quadBuffer: WebGLBuffer;
   protected vao: WebGLVertexArrayObject;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, config: AppConfig) {
     this.canvas = canvas;
+    this.config = config;
     const gl = canvas.getContext("webgl2", {
       alpha: true,
       premultipliedAlpha: true,

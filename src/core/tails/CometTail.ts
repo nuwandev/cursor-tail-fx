@@ -1,4 +1,5 @@
 import { BaseTail } from "./BaseTail";
+import { registerTail } from "./registry";
 
 export class CometTail extends BaseTail {
   public getShaders() {
@@ -69,3 +70,10 @@ void main() {
     // CometTail-specific per-frame logic (if any)
   }
 }
+
+registerTail({
+  id: "comet",
+  name: "Comet",
+  description: "A comet-like trail",
+  class: CometTail,
+});

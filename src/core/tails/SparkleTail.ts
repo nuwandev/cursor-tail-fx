@@ -1,4 +1,5 @@
 import { BaseTail } from "./BaseTail";
+import { registerTail } from "./registry";
 
 export class SparkleTail extends BaseTail {
   public getShaders() {
@@ -72,3 +73,10 @@ void main() {
     // SparkleTail-specific per-frame logic (if any)
   }
 }
+
+registerTail({
+  id: "sparkle",
+  name: "Sparkle",
+  description: "Sparkly particle effect",
+  class: SparkleTail,
+});

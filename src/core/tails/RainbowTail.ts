@@ -1,4 +1,5 @@
 import { BaseTail } from "./BaseTail";
+import { registerTail } from "./registry";
 
 export class RainbowTail extends BaseTail {
   public getShaders() {
@@ -84,3 +85,10 @@ void main() {
     // RainbowTail-specific per-frame logic (if any)
   }
 }
+
+registerTail({
+  id: "rainbow",
+  name: "Rainbow",
+  description: "Colorful rainbow trail",
+  class: RainbowTail,
+});

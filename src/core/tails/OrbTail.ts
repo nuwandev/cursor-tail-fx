@@ -1,4 +1,5 @@
 import { BaseTail } from "./BaseTail";
+import { registerTail } from "./registry";
 
 export class OrbTail extends BaseTail {
   public getShaders() {
@@ -72,3 +73,10 @@ void main() {
     // OrbTail-specific per-frame logic (if any)
   }
 }
+
+registerTail({
+  id: "orb",
+  name: "Orb",
+  description: "Floating orb effect",
+  class: OrbTail,
+});
