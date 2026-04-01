@@ -27,14 +27,11 @@ export const Events = {
 
 export type EventName = (typeof Events)[keyof typeof Events];
 
-export interface CursorMovePayload {
-  x: number;
-  y: number;
-}
-
-export interface ConfigUpdatePayload {
-  config: AppConfig;
-}
+// Runtime payloads (must match what Rust/JS actually emit)
+// - cursor-move: (nx, ny) normalized to [0..1]
+export type CursorMovePayload = [nx: number, ny: number];
+// - config-update: full AppConfig object
+export type ConfigUpdatePayload = AppConfig;
 
 // 3. Tail Registry Types
 import type { BaseTail } from "@/features/tails/BaseTail";
