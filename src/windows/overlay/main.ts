@@ -13,18 +13,10 @@ async function init() {
       renderer.handleConfigUpdate(config);
     });
 
-    let cursorEventReceived = false;
     onCursorMove((nx, ny) => {
-      cursorEventReceived = true;
-      console.log("cursor event", nx, ny);
-      console.log("canvas size", canvas.width, canvas.height);
       renderer.handleMouseMove(nx, ny);
     });
-    setTimeout(() => {
-      if (!cursorEventReceived) {
-        console.warn("No cursor events received — check backend emission");
-      }
-    }, 2000);
+
   } catch (err) {
     console.error("CRITICAL OVERLAY ERROR:", err);
   }
