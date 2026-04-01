@@ -3,183 +3,189 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CursorTrail Settings</title>
+  <title>CursorTrail — Settings</title>
   <link rel="stylesheet" href="/src/windows/settings/styles.css" />
   <script type="module" src="/src/windows/settings/main.ts" defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="app-container">
+
     <!-- Sidebar -->
     <nav class="sidebar">
       <div class="brand">
         <div class="logo">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L2 22L12 18L22 22L12 2Z" fill="url(#paint0_linear)"/>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2L2 22L12 18L22 22L12 2Z" fill="url(#logoGrad)"/>
             <defs>
-              <linearGradient id="paint0_linear" x1="12" y1="2" x2="12" y2="22" gradientUnits="userSpaceOnUse">
+              <linearGradient id="logoGrad" x1="12" y1="2" x2="12" y2="22" gradientUnits="userSpaceOnUse">
                 <stop stop-color="#38BDF8"/>
                 <stop offset="1" stop-color="#818CF8"/>
               </linearGradient>
             </defs>
           </svg>
         </div>
-        <h2>CursorTrail</h2>
+        <div class="brand-text">
+          <h2>CursorTrail</h2>
+          <span class="version-pill">v1.0.0</span>
+        </div>
       </div>
-      
+
+      <div class="status-indicator">
+        <span class="status-dot"></span>
+        <span>Running in background</span>
+      </div>
+
       <div class="nav-items">
-        <a href="#" class="nav-item active" data-target="tab-settings">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
-          Effects & Engine
+        <a href="#" class="nav-item active" data-target="tab-effects">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 22L12 18L22 22L12 2Z"/></svg>
+          Effects
+        </a>
+        <a href="#" class="nav-item" data-target="tab-engine">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+          Engine Tuning
         </a>
         <a href="#" class="nav-item" data-target="tab-about">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg>
-          About CursorTrail
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          About
         </a>
       </div>
 
       <div class="sidebar-footer">
         <button id="reset-btn" class="settings-action-btn">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
-          Reset Settings
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+          Reset to Defaults
         </button>
       </div>
     </nav>
 
     <!-- Main Content -->
     <main class="content">
-      
-      <!-- TAB: SETTINGS -->
-      <div id="tab-settings" class="tab-pane active">
+
+      <!-- TAB: EFFECTS -->
+      <div id="tab-effects" class="tab-pane active">
         <header class="topbar">
           <div>
-            <h1>Effects & Engine</h1>
-            <p>Configure the visual behavior of your cursor tail tracking real-time.</p>
+            <h1>Cursor Effects</h1>
+            <p>Choose a visual style for your cursor trail. Changes apply instantly.</p>
           </div>
         </header>
 
-      <div class="settings-grid">
-        
-        <!-- Primary Effect -->
-        <section class="settings-section">
-          <h3>Primary Architecture</h3>
-          <div class="card-grid" id="effect-cards"></div>
-        </section>
+        <div class="settings-grid">
+          <section class="settings-section">
+            <h3>Trail Style</h3>
+            <div class="card-grid" id="effect-cards"></div>
+          </section>
 
-        <!-- Color Theme (Swatches) -->
-        <section class="settings-section">
-          <h3>Color Palette</h3>
-          <div class="theme-swatches" id="theme-swatches">
-            
-            <label class="swatch-container">
-              <input type="radio" name="theme" value="cyan" checked>
-              <div class="swatch-wrapper">
-                <div class="swatch" style="background: #38bdf8; box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);"></div>
-              </div>
-              <span>Cyan</span>
-            </label>
-
-            <label class="swatch-container">
-              <input type="radio" name="theme" value="neon">
-              <div class="swatch-wrapper">
-                <div class="swatch" style="background: #e81cff; box-shadow: 0 0 12px rgba(232, 28, 255, 0.4);"></div>
-              </div>
-              <span>Neon</span>
-            </label>
-
-            <label class="swatch-container">
-              <input type="radio" name="theme" value="fire">
-              <div class="swatch-wrapper">
-                <div class="swatch" style="background: #ff4500; box-shadow: 0 0 12px rgba(255, 69, 0, 0.4);"></div>
-              </div>
-              <span>Fire</span>
-            </label>
-
-            <label class="swatch-container">
-              <input type="radio" name="theme" value="minimal">
-              <div class="swatch-wrapper">
-                <div class="swatch" style="background: #ffffff; box-shadow: 0 0 12px rgba(255, 255, 255, 0.4);"></div>
-              </div>
-              <span>Minimal</span>
-            </label>
-
-          </div>
-        </section>
-
-        <!-- Modifiers / Sliders -->
-        <section class="settings-section">
-          <h3>Engine Properties</h3>
-          
-          <div class="sliders-stack">
-            <div class="slider-container">
-              <div class="slider-header">
-                <label for="size-slider">Particle Scale</label>
-                <div class="value-badge" id="size-val">1.0x</div>
-              </div>
-              <input type="range" id="size-slider" min="0.1" max="3.0" step="0.1" value="1.0">
-            </div>
-
-            <div class="slider-container">
-              <div class="slider-header">
-                <label for="length-slider">Trail Lifespan</label>
-                <div class="value-badge" id="length-val">1.0x</div>
-              </div>
-              <input type="range" id="length-slider" min="0.1" max="3.0" step="0.1" value="1.0">
-            </div>
-
-            <div class="slider-container">
-              <div class="slider-header">
-                <label for="opacity-slider">Base Opacity</label>
-                <div class="value-badge" id="opacity-val">1.0x</div>
-              </div>
-              <input type="range" id="opacity-slider" min="0.1" max="1.0" step="0.1" value="1.0">
-            </div>
-          </div>
-        </section>
-
-          </div>
-        </section>
-
+          <section class="settings-section">
+            <h3>Color Theme</h3>
+            <div class="theme-swatches" id="theme-swatches"></div>
+          </section>
+        </div>
       </div>
-      
+
+      <!-- TAB: ENGINE TUNING -->
+      <div id="tab-engine" class="tab-pane">
+        <header class="topbar">
+          <div>
+            <h1>Engine Tuning</h1>
+            <p>Fine-tune the particle engine properties. All changes are live.</p>
+          </div>
+        </header>
+
+        <div class="settings-grid">
+          <section class="settings-section">
+            <h3>Particle Properties</h3>
+            <div class="sliders-stack">
+              <div class="slider-container">
+                <div class="slider-header">
+                  <div class="slider-label-group">
+                    <label for="size-slider">Particle Scale</label>
+                    <span class="slider-hint">Controls the size of each particle</span>
+                  </div>
+                  <div class="value-badge" id="size-val">1.0×</div>
+                </div>
+                <input type="range" id="size-slider" min="0.1" max="3.0" step="0.1" value="1.0">
+                <div class="slider-track-labels"><span>Tiny</span><span>Huge</span></div>
+              </div>
+
+              <div class="slider-container">
+                <div class="slider-header">
+                  <div class="slider-label-group">
+                    <label for="length-slider">Trail Lifespan</label>
+                    <span class="slider-hint">How long particles linger on screen</span>
+                  </div>
+                  <div class="value-badge" id="length-val">1.0×</div>
+                </div>
+                <input type="range" id="length-slider" min="0.1" max="3.0" step="0.1" value="1.0">
+                <div class="slider-track-labels"><span>Short</span><span>Long</span></div>
+              </div>
+
+              <div class="slider-container">
+                <div class="slider-header">
+                  <div class="slider-label-group">
+                    <label for="opacity-slider">Opacity</label>
+                    <span class="slider-hint">Brightness and visibility of the trail</span>
+                  </div>
+                  <div class="value-badge" id="opacity-val">1.0×</div>
+                </div>
+                <input type="range" id="opacity-slider" min="0.1" max="1.0" step="0.1" value="1.0">
+                <div class="slider-track-labels"><span>Subtle</span><span>Vivid</span></div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </div>
+
       <!-- TAB: ABOUT -->
       <div id="tab-about" class="tab-pane">
         <header class="topbar">
           <div>
             <h1>About CursorTrail</h1>
-            <p>A next-generation desktop cursor effects engine.</p>
+            <p>A beautiful, lightweight cursor effects engine for Windows.</p>
           </div>
         </header>
 
-        <section class="settings-section about-section">
-          <h3>Version Information</h3>
-          <div class="about-card">
-            <div class="version-row">
-              <span class="label">CursorTrail Engine</span>
-              <span class="value">v1.2.0 (Stable)</span>
+        <div class="settings-grid">
+          <section class="settings-section">
+            <h3>Version Information</h3>
+            <div class="about-card">
+              <div class="version-row">
+                <span class="label">CursorTrail</span>
+                <span class="value accent">v1.0.0</span>
+              </div>
+              <div class="version-row">
+                <span class="label">Rendering API</span>
+                <span class="value">WebGL 2.0 · GPU Accelerated</span>
+              </div>
+              <div class="version-row">
+                <span class="label">Backend</span>
+                <span class="value">Tauri 2 · Rust</span>
+              </div>
+              <div class="version-row">
+                <span class="label">Frame Budget</span>
+                <span class="value">60 fps · Adaptive idle</span>
+              </div>
+              <div class="version-row">
+                <span class="label">Platform</span>
+                <span class="value">Windows 10 / 11</span>
+              </div>
             </div>
-            <div class="version-row">
-              <span class="label">Rendering API</span>
-              <span class="value">WebGL 2.0 Hardware Accelerated</span>
-            </div>
-            <div class="version-row">
-              <span class="label">Architecture</span>
-              <span class="value">Tauri 2 (Rust Backend)</span>
-            </div>
-          </div>
+          </section>
 
-          <h3 style="margin-top: 32px">Project Details</h3>
-          <p class="about-text">
-            CursorTrail draws inspiration from beautiful modern web interfaces and brings native, optimized cursor trails directly to your operating system via <strong>transparent layered windows</strong>. 
-          </p>
-          <p class="about-text">
-            By leveraging WebGL Instanced Arrays, memory footprint is kept exceptionally low while achieving silky smooth 144hz rendering across all graphical effects.
-          </p>
-          
-          <div class="credits">
-            <p>Designed and built for peak aesthetics.</p>
-          </div>
-        </section>
+          <section class="settings-section">
+            <h3>How it works</h3>
+            <p class="about-text">
+              CursorTrail renders all effects using <strong>WebGL 2 instanced drawing</strong> — a single GPU draw call renders up to 1,000 particles at 60 fps with minimal CPU overhead.
+            </p>
+            <p class="about-text">
+              The Rust backend uses adaptive polling — tracking the cursor at 120 Hz when active, dropping to 10 Hz during idle — so CPU usage when you're not moving the mouse is effectively zero.
+            </p>
+            <p class="about-text">
+              New effects can be added as a single <code>.ts</code> file and automatically appear in the settings with no changes required to existing code.
+            </p>
+          </section>
+        </div>
       </div>
 
     </main>

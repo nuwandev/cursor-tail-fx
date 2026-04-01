@@ -5,26 +5,41 @@ import { ThemeRegistry } from "@/shared/config/themes";
 
 let currentConfig = loadConfig();
 
+// Icons keyed by tail id — fallback to generic sparkle if unknown
+const TAIL_ICONS: Record<string, string> = {
+  comet: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 22L12 18L22 22L12 2Z"/></svg>`,
+  orb: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>`,
+  sparkle: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/></svg>`,
+  bubble: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="9" r="1.5" fill="currentColor"/><circle cx="15" cy="11" r="1" fill="currentColor"/></svg>`,
+};
+
+const GENERIC_ICON = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>`;
+
 function broadcastUpdate() {
   saveConfig(currentConfig);
-  console.log("[settings] Emitting config-update", currentConfig);
   emitConfigUpdate(currentConfig);
 }
+
 function renderEffectCards() {
+  const effectCards = document.getElementById("effect-cards") as HTMLDivElement;
   effectCards.innerHTML = "";
+
   const tails = getAllTails();
-  // Always normalize config before using
   currentConfig = normalizeConfig(currentConfig);
-  let selectedId = tails.some((t) => t.id === currentConfig.tailId)
+
+  // If saved tail no longer exists (e.g. file deleted), fall back to first
+  const validId = tails.some((t) => t.id === currentConfig.tailId)
     ? currentConfig.tailId
-    : tails[0].id;
-  if (selectedId !== currentConfig.tailId) {
-    currentConfig.tailId = selectedId;
+    : tails[0]?.id ?? "comet";
+
+  if (validId !== currentConfig.tailId) {
+    currentConfig.tailId = validId;
     broadcastUpdate();
   }
+
   tails.forEach((tail) => {
     const label = document.createElement("label");
-    label.className = "radio-card" + (tail.id === currentConfig.tailId ? " selected" : "");
+    label.className = "radio-card";
 
     const input = document.createElement("input");
     input.type = "radio";
@@ -33,11 +48,15 @@ function renderEffectCards() {
     input.id = `effect-radio-${tail.id}`;
     if (tail.id === currentConfig.tailId) input.checked = true;
 
-    input.addEventListener("change", (e) => {
-      if ((e.target as HTMLInputElement).checked) {
+    input.addEventListener("change", () => {
+      if (input.checked) {
         currentConfig.tailId = tail.id;
         broadcastUpdate();
-        renderEffectCards();
+        // Update selected state without full re-render (avoid flash)
+        document.querySelectorAll(".radio-card input[type=radio]").forEach((r) => {
+          const content = (r as HTMLInputElement).parentElement?.querySelector(".card-content");
+          content?.classList.toggle("_checked", (r as HTMLInputElement).checked);
+        });
       }
     });
 
@@ -45,8 +64,8 @@ function renderEffectCards() {
     cardContent.className = "card-content";
 
     const icon = document.createElement("div");
-    icon.className = "icon";
-    icon.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 17a10 10 0 0 0-20 0"></path><path d="M6 17a6 6 0 0 1 12 0"></path><path d="M10 17a2 2 0 0 1 4 0"></path></svg>`;
+    icon.className = "card-icon";
+    icon.innerHTML = TAIL_ICONS[tail.id] ?? GENERIC_ICON;
 
     const info = document.createElement("div");
     info.className = "card-info";
@@ -63,19 +82,16 @@ function renderEffectCards() {
     info.appendChild(desc);
     cardContent.appendChild(icon);
     cardContent.appendChild(info);
-
     label.appendChild(input);
     label.appendChild(cardContent);
     effectCards.appendChild(label);
   });
 }
 
-const effectCards = document.getElementById("effect-cards") as HTMLDivElement;
-renderEffectCards();
-
 function renderThemeSwatches() {
   const swatches = document.getElementById("theme-swatches") as HTMLDivElement;
   swatches.innerHTML = "";
+
   ThemeRegistry.forEach((theme) => {
     const label = document.createElement("label");
     label.className = "swatch-container";
@@ -86,104 +102,112 @@ function renderThemeSwatches() {
     input.value = theme.id;
     if (theme.id === currentConfig.themeId) input.checked = true;
 
-    input.addEventListener("change", (e) => {
-      if ((e.target as HTMLInputElement).checked) {
+    input.addEventListener("change", () => {
+      if (input.checked) {
         currentConfig.themeId = theme.id;
         broadcastUpdate();
-        renderThemeSwatches();
       }
     });
 
-    const swatchWrapper = document.createElement("div");
-    swatchWrapper.className = "swatch-wrapper";
+    const [r, g, b] = theme.rgb;
+    const r255 = Math.round(r * 255);
+    const g255 = Math.round(g * 255);
+    const b255 = Math.round(b * 255);
+    const color = `rgb(${r255}, ${g255}, ${b255})`;
+    const glow = `rgba(${r255}, ${g255}, ${b255}, 0.5)`;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "swatch-wrapper";
+
     const swatch = document.createElement("div");
     swatch.className = "swatch";
-    const [r, g, b] = theme.rgb;
-    const color = `rgb(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)})`;
     swatch.style.background = color;
-    swatch.style.boxShadow = `0 0 12px rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, 0.4)`;
-    swatchWrapper.appendChild(swatch);
+    swatch.style.boxShadow = `0 0 10px ${glow}`;
+
+    wrapper.appendChild(swatch);
 
     const name = document.createElement("span");
     name.textContent = theme.name;
 
     label.appendChild(input);
-    label.appendChild(swatchWrapper);
+    label.appendChild(wrapper);
     label.appendChild(name);
     swatches.appendChild(label);
   });
 }
+
+// ─── Slider elements ──────────────────────────────────────────────
 const sizeSlider = document.getElementById("size-slider") as HTMLInputElement;
 const lengthSlider = document.getElementById("length-slider") as HTMLInputElement;
 const opacitySlider = document.getElementById("opacity-slider") as HTMLInputElement;
-const sizeVal = document.getElementById("size-val") as HTMLDivElement;
-const lengthVal = document.getElementById("length-val") as HTMLDivElement;
-const opacityVal = document.getElementById("opacity-val") as HTMLDivElement;
-const resetBtn = document.getElementById("reset-btn") as HTMLButtonElement;
-const navItems = document.querySelectorAll<HTMLLIElement>(".nav-item");
-const tabPanes = document.querySelectorAll<HTMLDivElement>(".tab-pane");
+const sizeVal = document.getElementById("size-val") as HTMLElement;
+const lengthVal = document.getElementById("length-val") as HTMLElement;
+const opacityVal = document.getElementById("opacity-val") as HTMLElement;
 
-function initUI() {
-  renderEffectCards();
-  renderThemeSwatches();
+function updateLabels() {
+  sizeVal.innerText = `${currentConfig.sizeMultiplier.toFixed(1)}×`;
+  lengthVal.innerText = `${currentConfig.lengthMultiplier.toFixed(1)}×`;
+  opacityVal.innerText = `${currentConfig.opacityMultiplier.toFixed(1)}×`;
+}
+
+function syncSliders() {
   sizeSlider.value = currentConfig.sizeMultiplier.toString();
   lengthSlider.value = currentConfig.lengthMultiplier.toString();
   opacitySlider.value = currentConfig.opacityMultiplier.toString();
   updateLabels();
 }
 
-function updateLabels() {
-  sizeVal.innerText = `${currentConfig.sizeMultiplier.toFixed(1)}x`;
-  lengthVal.innerText = `${currentConfig.lengthMultiplier.toFixed(1)}x`;
-  opacityVal.innerText = `${currentConfig.opacityMultiplier.toFixed(1)}x`;
-}
-
 sizeSlider.addEventListener("input", (e) => {
-  currentConfig.sizeMultiplier = Number.parseFloat((e.target as HTMLInputElement).value);
+  currentConfig.sizeMultiplier = parseFloat((e.target as HTMLInputElement).value);
   updateLabels();
 });
 sizeSlider.addEventListener("change", () => broadcastUpdate());
 
 lengthSlider.addEventListener("input", (e) => {
-  currentConfig.lengthMultiplier = Number.parseFloat((e.target as HTMLInputElement).value);
+  currentConfig.lengthMultiplier = parseFloat((e.target as HTMLInputElement).value);
   updateLabels();
 });
 lengthSlider.addEventListener("change", () => broadcastUpdate());
 
 opacitySlider.addEventListener("input", (e) => {
-  currentConfig.opacityMultiplier = Number.parseFloat((e.target as HTMLInputElement).value);
+  currentConfig.opacityMultiplier = parseFloat((e.target as HTMLInputElement).value);
   updateLabels();
 });
 opacitySlider.addEventListener("change", () => broadcastUpdate());
 
-// Tabs
-navItems.forEach((item) => {
-  item.addEventListener("click", () => {
-    navItems.forEach((n) => n.classList.remove("active"));
-    tabPanes.forEach((t) => t.classList.remove("active"));
-
+// ─── Tabs ─────────────────────────────────────────────────────────
+document.querySelectorAll<HTMLElement>(".nav-item").forEach((item) => {
+  item.addEventListener("click", (e) => {
+    e.preventDefault();
+    document.querySelectorAll(".nav-item").forEach((n) => n.classList.remove("active"));
+    document.querySelectorAll(".tab-pane").forEach((t) => t.classList.remove("active"));
     item.classList.add("active");
-    const target = (item as HTMLElement).dataset.target;
-    if (target) {
-      document.getElementById(target)?.classList.add("active");
-    }
+    const target = item.dataset.target;
+    if (target) document.getElementById(target)?.classList.add("active");
   });
 });
 
-// Reset
-resetBtn.addEventListener("click", () => {
+// ─── Reset ────────────────────────────────────────────────────────
+document.getElementById("reset-btn")?.addEventListener("click", () => {
   currentConfig = { ...DefaultConfig };
-  initUI();
+  renderEffectCards();
+  renderThemeSwatches();
+  syncSliders();
   broadcastUpdate();
 });
 
-// Sync from changes that might happen externally
+// ─── Sync from external config changes ───────────────────────────
 onConfigUpdate((config) => {
   currentConfig = normalizeConfig(config);
-  initUI();
+  renderEffectCards();
+  renderThemeSwatches();
+  syncSliders();
 });
 
+// ─── Init ─────────────────────────────────────────────────────────
 document.addEventListener("DOMContentLoaded", () => {
+  renderEffectCards();
+  renderThemeSwatches();
+  syncSliders();
   broadcastUpdate();
-  initUI();
 });

@@ -1,8 +1,8 @@
 [package]
-name = "tauri-app"
-version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+name = "cursor-trail"
+version = "1.0.0"
+description = "CursorTrail — Beautiful cursor trail effects for your desktop"
+authors = ["nuwandev"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
