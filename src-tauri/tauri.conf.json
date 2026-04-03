@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "CursorTrail",
+  "productName": "tauri.conf.json",
   "version": "1.0.0",
-  "identifier": "dev.cursortail.app",
+  "identifier": "com.nuwandev.cursora",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -14,7 +14,7 @@
     "windows": [
       {
         "url": "src/windows/overlay/index.html",
-        "title": "CursorTrail",
+        "title": "Cursora",
         "width": 800,
         "height": 600,
         "decorations": false,

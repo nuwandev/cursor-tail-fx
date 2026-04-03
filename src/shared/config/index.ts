@@ -5,7 +5,7 @@ import type { AppConfig } from "@/types";
 export const DefaultConfig: AppConfig = {
   tailId: "comet",
   themeId: "cyan",
-  sizeMultiplier: 1,
+  sizeMultiplier: 0.4,
   lengthMultiplier: 1,
   opacityMultiplier: 1,
 };
