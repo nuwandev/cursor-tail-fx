@@ -1,9 +1,25 @@
 {
-  "name": "tauri-app",
+  "name": "cursor-trail",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "license": "Apache-2.0",
   "author": "Theekshana Nuwan (nuwandev)",
+  "description": "CursorTrail — GPU-accelerated cursor trail effects for Windows (Tauri + WebGL2)",
+  "keywords": [
+    "cursor",
+    "cursor-trail",
+    "cursor-effects",
+    "windows",
+    "tauri",
+    "webgl2",
+    "shaders",
+    "particle-system"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nuwandev/cursor-tail.git"
+  },
+  "homepage": "https://github.com/nuwandev/cursor-tail",
   "type": "module",
   "scripts": {
     "dev": "vite",

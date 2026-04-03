@@ -5,6 +5,9 @@ description = "CursorTrail — Beautiful cursor trail effects for your desktop"
 authors = ["Theekshana Nuwan (nuwandev)"]
 license = "Apache-2.0"
 edition = "2021"
+homepage = "https://github.com/nuwandev/cursor-tail"
+repository = "https://github.com/nuwandev/cursor-tail.git"
+keywords = ["cursor", "cursor-trail", "tauri", "webgl", "windows"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
