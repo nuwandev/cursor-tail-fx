@@ -1,6 +1,6 @@
-# Contributing to CursorTrail
+# Contributing to Cursora
 
-Thanks for your interest in contributing — CursorTrail is designed to be easy to extend.
+Thanks for your interest in contributing — Cursora is designed to be easy to extend.
 
 The most valuable contributions are new **tail effects** (visual styles). You can add a new effect as a single TypeScript file plus shaders.
 
@@ -50,7 +50,7 @@ Tauri bundles are produced under `src-tauri/target/release/bundle/`.
 
 Configuration is stored in the webview’s local storage under the key:
 
-- `cursortrail_config`
+- `cursora_config` (migrates from `cursortrail_config`)
 
 Shape (see `src/types/index.ts`):
 

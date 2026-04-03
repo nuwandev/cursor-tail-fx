@@ -2,11 +2,11 @@
 
 ## Supported versions
 
-CursorTrail is currently in active development. The latest tagged release is considered supported.
+Cursora is currently in active development. The latest tagged release is considered supported.
 
 ## Reporting a vulnerability
 
-If you believe you have found a security issue in CursorTrail:
+If you believe you have found a security issue in Cursora:
 
 - Do **not** include exploit details in a public issue.
 - Instead, either:
@@ -15,7 +15,7 @@ If you believe you have found a security issue in CursorTrail:
 
 Please include:
 
-- CursorTrail version (from Settings → About, or the release tag)
+- Cursora version (from Settings → About, or the release tag)
 - Windows version (10 / 11)
 - A short description of the issue and, if possible, steps to reproduce
 
@@ -23,7 +23,7 @@ There is **no bug bounty program**, but responsible disclosure is appreciated an
 
 ## Data & privacy
 
-- CursorTrail reads your **cursor position** locally to render effects on your own machine.
+- Cursora reads your **cursor position** locally to render effects on your own machine.
 - It does **not**:
   - collect or send cursor data to any server
   - read your files or clipboard

@@ -1,13 +1,13 @@
-# CursorTrail
+# Cursora
 
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
-[![Release](https://img.shields.io/github/v/release/nuwandev/cursor-tail?display_name=tag)](https://github.com/nuwandev/cursor-tail/releases)
-[![Downloads](https://img.shields.io/github/downloads/nuwandev/cursor-tail/total.svg)](https://github.com/nuwandev/cursor-tail/releases)
+[![Release](https://img.shields.io/github/v/release/nuwandev/cursor-tail-fx?display_name=tag)](https://github.com/nuwandev/cursor-tail-fx/releases)
+[![Downloads](https://img.shields.io/github/downloads/nuwandev/cursor-tail-fx/total.svg)](https://github.com/nuwandev/cursor-tail-fx/releases)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-informational)
 
 GPU‑accelerated cursor trail effects for Windows — built with **Tauri (Rust)** + **WebGL 2 (TypeScript)**.
 
-CursorTrail runs as a click‑through overlay and renders particle trails using instanced drawing (up to 1,000 particles per frame) while keeping CPU usage low via adaptive cursor polling.
+Cursora runs as a click‑through overlay and renders particle trails using instanced drawing (up to 1,000 particles per frame) while keeping CPU usage low via adaptive cursor polling.
 
 ## Features
 
@@ -27,12 +27,12 @@ CursorTrail runs as a click‑through overlay and renders particle trails using 
 2. Download the latest Windows installer / `.exe`.
 3. Run it.
 
-On first launch, CursorTrail starts in the background and shows a **system tray** icon.
+On first launch, Cursora starts in the background and shows a **system tray** icon.
 
 ## How to use
 
 - **Open Settings:** right‑click the tray icon → **Open Settings**
-- **Quit:** right‑click the tray icon → **Quit CursorTrail**
+- **Quit:** right‑click the tray icon → **Quit Cursora**
 
 ### Settings overview
 
@@ -52,11 +52,11 @@ On first launch, CursorTrail starts in the background and shows a **system tray*
 
 ## Privacy
 
-CursorTrail tracks cursor position locally to render the effect. It does not need an account, and it does not send cursor data to a server.
+Cursora tracks cursor position locally to render the effect. It does not need an account, and it does not send cursor data to a server.
 
 ## Contributing
 
-Most users just install and enjoy CursorTrail. If you want to build from source or contribute (especially new tail effects), see:
+Most users just install and enjoy Cursora. If you want to build from source or contribute (especially new tail effects), see:
 
 - [CONTRIBUTING.md](CONTRIBUTING.md)
 

@@ -121,7 +121,7 @@ pub fn run() {
             let settings_i =
                 MenuItem::with_id(app, "settings", "Open Settings", true, None::<&str>).unwrap();
             let quit_i =
-                MenuItem::with_id(app, "quit", "Quit CursorTrail", true, None::<&str>).unwrap();
+                MenuItem::with_id(app, "quit", "Quit Cursora", true, None::<&str>).unwrap();
             let menu = Menu::with_items(app, &[&settings_i, &quit_i]).unwrap();
 
             let _tray = TrayIconBuilder::new()
@@ -143,7 +143,7 @@ pub fn run() {
                                     "src/windows/settings/index.html".into(),
                                 ),
                             )
-                            .title("CursorTrail — Settings")
+                            .title("Cursora — Settings")
                             .inner_size(860.0, 620.0)
                             .min_inner_size(700.0, 520.0)
                             .resizable(true)

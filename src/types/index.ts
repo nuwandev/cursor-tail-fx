@@ -1,4 +1,4 @@
-// Centralized generic types for CursorTrail
+// Centralized generic types for Cursora
 
 // 1. Config Types
 export type ThemeId = string;

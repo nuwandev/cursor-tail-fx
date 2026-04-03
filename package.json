@@ -1,10 +1,10 @@
 {
-  "name": "cursor-trail",
+  "name": "cursor-tail-fx",
   "private": true,
   "version": "1.0.0",
   "license": "Apache-2.0",
   "author": "Theekshana Nuwan (nuwandev)",
-  "description": "CursorTrail — GPU-accelerated cursor trail effects for Windows (Tauri + WebGL2)",
+  "description": "Cursora — GPU-accelerated cursor trail effects for Windows (Tauri + WebGL2)",
   "keywords": [
     "cursor",
     "cursor-trail",
@@ -17,9 +17,9 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/nuwandev/cursor-tail.git"
+    "url": "https://github.com/nuwandev/cursor-tail-fx.git"
   },
-  "homepage": "https://github.com/nuwandev/cursor-tail",
+  "homepage": "https://github.com/nuwandev/cursor-tail-fx",
   "type": "module",
   "scripts": {
     "dev": "vite",

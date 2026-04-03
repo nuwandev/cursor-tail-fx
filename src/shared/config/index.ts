@@ -10,6 +10,9 @@ export const DefaultConfig: AppConfig = {
   opacityMultiplier: 1,
 };
 
+const CONFIG_KEY = "cursora_config";
+const LEGACY_CONFIG_KEY = "cursortrail_config";
+
 function isValidTailId(id: string): boolean {
   return getTailById(id) !== undefined;
 }
@@ -43,7 +46,7 @@ export function normalizeConfig(input: any): AppConfig {
 
 export function loadConfig(): AppConfig {
   try {
-    const raw = localStorage.getItem("cursortrail_config");
+    const raw = localStorage.getItem(CONFIG_KEY) ?? localStorage.getItem(LEGACY_CONFIG_KEY);
     if (!raw) return DefaultConfig;
     return normalizeConfig(JSON.parse(raw));
   } catch {
@@ -53,5 +56,5 @@ export function loadConfig(): AppConfig {
 
 export function saveConfig(config: AppConfig) {
   const normalized = normalizeConfig(config);
-  localStorage.setItem("cursortrail_config", JSON.stringify(normalized));
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(normalized));
 }

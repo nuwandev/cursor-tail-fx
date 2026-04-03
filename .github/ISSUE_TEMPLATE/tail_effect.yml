@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for helping expand CursorTrail’s effects.
+        Thanks for helping expand Cursora’s effects.
 
         If you’re ready to implement, feel free to open a PR directly.
 
