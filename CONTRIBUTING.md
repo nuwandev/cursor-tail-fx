@@ -4,6 +4,8 @@ Thanks for your interest in contributing — CursorTrail is designed to be easy 
 
 The most valuable contributions are new **tail effects** (visual styles). You can add a new effect as a single TypeScript file plus shaders.
 
+By contributing, you agree that your contributions will be licensed under the project license (Apache-2.0). See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+
 ## Quick contribution ideas
 
 - Add a new tail effect (`*Tail.ts` + shaders)

@@ -57,4 +57,8 @@ Most users just install and enjoy CursorTrail. If you want to build from source 
 
 ## License
 
-No license has been specified yet in this repository.
+Licensed under the Apache License, Version 2.0.
+
+Copyright © 2026 Theekshana Nuwan (nuwandev)
+
+See [LICENSE](LICENSE) and [NOTICE](NOTICE).
