@@ -11,10 +11,10 @@ pub fn run() {
             {
                 use windows::Win32::Foundation::HWND;
                 use windows::Win32::UI::WindowsAndMessaging::{
-                    GetSystemMetrics, GetWindowLongW, SetWindowLongW, SetWindowPos,
-                    GWL_EXSTYLE, HWND_TOPMOST, SM_CXVIRTUALSCREEN, SM_CYVIRTUALSCREEN,
-                    SM_XVIRTUALSCREEN, SM_YVIRTUALSCREEN, SWP_NOACTIVATE, SWP_NOZORDER,
-                    WS_EX_LAYERED, WS_EX_TRANSPARENT,
+                    GetSystemMetrics, GetWindowLongW, SetWindowLongW, SetWindowPos, GWL_EXSTYLE,
+                    HWND_TOPMOST, SM_CXVIRTUALSCREEN, SM_CYVIRTUALSCREEN, SM_XVIRTUALSCREEN,
+                    SM_YVIRTUALSCREEN, SWP_NOACTIVATE, SWP_NOZORDER, WS_EX_LAYERED,
+                    WS_EX_TRANSPARENT,
                 };
 
                 let hwnd: HWND = HWND(window.hwnd().unwrap().0 as _);
@@ -139,9 +139,7 @@ pub fn run() {
                             let _ = tauri::WebviewWindowBuilder::new(
                                 app,
                                 "settings",
-                                tauri::WebviewUrl::App(
-                                    "src/windows/settings/index.html".into(),
-                                ),
+                                tauri::WebviewUrl::App("src/windows/settings/index.html".into()),
                             )
                             .title("Cursora — Settings")
                             .inner_size(860.0, 620.0)

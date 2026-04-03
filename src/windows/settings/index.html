@@ -1,194 +1,273 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Cursora — Settings</title>
-  <link rel="stylesheet" href="/src/windows/settings/styles.css" />
-  <script type="module" src="/src/windows/settings/main.ts" defer></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-</head>
-<body>
-  <div class="app-container">
-
-    <!-- Sidebar -->
-    <nav class="sidebar">
-      <div class="brand">
-        <div class="logo">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2L2 22L12 18L22 22L12 2Z" fill="url(#logoGrad)"/>
-            <defs>
-              <linearGradient id="logoGrad" x1="12" y1="2" x2="12" y2="22" gradientUnits="userSpaceOnUse">
-                <stop stop-color="#38BDF8"/>
-                <stop offset="1" stop-color="#818CF8"/>
-              </linearGradient>
-            </defs>
-          </svg>
-        </div>
-        <div class="brand-text">
-          <h2>Cursora</h2>
-          <span class="version-pill">v1.0.0</span>
-        </div>
-      </div>
-
-      <div class="status-indicator">
-        <span class="status-dot"></span>
-        <span>Running in background</span>
-      </div>
-
-      <div class="nav-items">
-        <a href="#" class="nav-item active" data-target="tab-effects">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 22L12 18L22 22L12 2Z"/></svg>
-          Effects
-        </a>
-        <a href="#" class="nav-item" data-target="tab-engine">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
-          Engine Tuning
-        </a>
-        <a href="#" class="nav-item" data-target="tab-about">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-          About
-        </a>
-      </div>
-
-      <div class="sidebar-footer">
-        <button id="reset-btn" class="settings-action-btn">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
-          Reset to Defaults
-        </button>
-      </div>
-    </nav>
-
-    <!-- Main Content -->
-    <main class="content">
-
-      <!-- TAB: EFFECTS -->
-      <div id="tab-effects" class="tab-pane active">
-        <header class="topbar">
-          <div>
-            <h1>Cursor Effects</h1>
-            <p>Choose a visual style for your cursor trail. Changes apply instantly.</p>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cursora — Settings</title>
+    <link rel="stylesheet" href="/src/windows/settings/styles.css" />
+    <script type="module" src="/src/windows/settings/main.ts" defer></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- Sidebar -->
+      <nav class="sidebar">
+        <div class="brand">
+          <div class="logo">
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M12 2L2 22L12 18L22 22L12 2Z" fill="url(#logoGrad)" />
+              <defs>
+                <linearGradient
+                  id="logoGrad"
+                  x1="12"
+                  y1="2"
+                  x2="12"
+                  y2="22"
+                  gradientUnits="userSpaceOnUse"
+                >
+                  <stop stop-color="#38BDF8" />
+                  <stop offset="1" stop-color="#818CF8" />
+                </linearGradient>
+              </defs>
+            </svg>
           </div>
-        </header>
-
-        <div class="settings-grid">
-          <section class="settings-section">
-            <h3>Trail Style</h3>
-            <div class="card-grid" id="effect-cards"></div>
-          </section>
-
-          <section class="settings-section">
-            <h3>Color Theme</h3>
-            <div class="theme-swatches" id="theme-swatches"></div>
-          </section>
-        </div>
-      </div>
-
-      <!-- TAB: ENGINE TUNING -->
-      <div id="tab-engine" class="tab-pane">
-        <header class="topbar">
-          <div>
-            <h1>Engine Tuning</h1>
-            <p>Fine-tune the particle engine properties. All changes are live.</p>
+          <div class="brand-text">
+            <h2>Cursora</h2>
+            <span class="version-pill">v1.0.0</span>
           </div>
-        </header>
+        </div>
 
-        <div class="settings-grid">
-          <section class="settings-section">
-            <h3>Particle Properties</h3>
-            <div class="sliders-stack">
-              <div class="slider-container">
-                <div class="slider-header">
-                  <div class="slider-label-group">
-                    <label for="size-slider">Particle Scale</label>
-                    <span class="slider-hint">Controls the size of each particle</span>
-                  </div>
-                  <div class="value-badge" id="size-val">1.0×</div>
-                </div>
-                <input type="range" id="size-slider" min="0.1" max="3.0" step="0.1" value="1.0">
-                <div class="slider-track-labels"><span>Tiny</span><span>Huge</span></div>
-              </div>
+        <div class="status-indicator">
+          <span class="status-dot"></span>
+          <span>Running in background</span>
+        </div>
 
-              <div class="slider-container">
-                <div class="slider-header">
-                  <div class="slider-label-group">
-                    <label for="length-slider">Trail Lifespan</label>
-                    <span class="slider-hint">How long particles linger on screen</span>
-                  </div>
-                  <div class="value-badge" id="length-val">1.0×</div>
-                </div>
-                <input type="range" id="length-slider" min="0.1" max="3.0" step="0.1" value="1.0">
-                <div class="slider-track-labels"><span>Short</span><span>Long</span></div>
-              </div>
+        <div class="nav-items">
+          <a href="#" class="nav-item active" data-target="tab-effects">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 2L2 22L12 18L22 22L12 2Z" />
+            </svg>
+            Effects
+          </a>
+          <a href="#" class="nav-item" data-target="tab-engine">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 20V10" />
+              <path d="M18 20V4" />
+              <path d="M6 20v-4" />
+            </svg>
+            Engine Tuning
+          </a>
+          <a href="#" class="nav-item" data-target="tab-about">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 16v-4" />
+              <path d="M12 8h.01" />
+            </svg>
+            About
+          </a>
+        </div>
 
-              <div class="slider-container">
-                <div class="slider-header">
-                  <div class="slider-label-group">
-                    <label for="opacity-slider">Opacity</label>
-                    <span class="slider-hint">Brightness and visibility of the trail</span>
-                  </div>
-                  <div class="value-badge" id="opacity-val">1.0×</div>
-                </div>
-                <input type="range" id="opacity-slider" min="0.1" max="1.0" step="0.1" value="1.0">
-                <div class="slider-track-labels"><span>Subtle</span><span>Vivid</span></div>
-              </div>
+        <div class="sidebar-footer">
+          <button id="reset-btn" class="settings-action-btn">
+            <svg
+              width="13"
+              height="13"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+              <path d="M3 3v5h5" />
+            </svg>
+            Reset to Defaults
+          </button>
+        </div>
+      </nav>
+
+      <!-- Main Content -->
+      <main class="content">
+        <!-- TAB: EFFECTS -->
+        <div id="tab-effects" class="tab-pane active">
+          <header class="topbar">
+            <div>
+              <h1>Cursor Effects</h1>
+              <p>Choose a visual style for your cursor trail. Changes apply instantly.</p>
             </div>
-          </section>
-        </div>
-      </div>
+          </header>
 
-      <!-- TAB: ABOUT -->
-      <div id="tab-about" class="tab-pane">
-        <header class="topbar">
-          <div>
-            <h1>About Cursora</h1>
-            <p>A beautiful, lightweight cursor effects engine for Windows.</p>
+          <div class="settings-grid">
+            <section class="settings-section">
+              <h3>Trail Style</h3>
+              <div class="card-grid" id="effect-cards"></div>
+            </section>
+
+            <section class="settings-section">
+              <h3>Color Theme</h3>
+              <div class="theme-swatches" id="theme-swatches"></div>
+            </section>
           </div>
-        </header>
-
-        <div class="settings-grid">
-          <section class="settings-section">
-            <h3>Version Information</h3>
-            <div class="about-card">
-              <div class="version-row">
-                <span class="label">Cursora</span>
-                <span class="value accent">v1.0.0</span>
-              </div>
-              <div class="version-row">
-                <span class="label">Rendering API</span>
-                <span class="value">WebGL 2.0 · GPU Accelerated</span>
-              </div>
-              <div class="version-row">
-                <span class="label">Backend</span>
-                <span class="value">Tauri 2 · Rust</span>
-              </div>
-              <div class="version-row">
-                <span class="label">Frame Budget</span>
-                <span class="value">60 fps · Adaptive idle</span>
-              </div>
-              <div class="version-row">
-                <span class="label">Platform</span>
-                <span class="value">Windows 10 / 11</span>
-              </div>
-            </div>
-          </section>
-
-          <section class="settings-section">
-            <h3>How it works</h3>
-            <p class="about-text">
-              Cursora renders all effects using <strong>WebGL 2 instanced drawing</strong> — a single GPU draw call renders up to 1,000 particles at 60 fps with minimal CPU overhead.
-            </p>
-            <p class="about-text">
-              The Rust backend uses adaptive polling — tracking the cursor at 120 Hz when active, dropping to 10 Hz during idle — so CPU usage when you're not moving the mouse is effectively zero.
-            </p>
-            <p class="about-text">
-              New effects can be added as a single <code>.ts</code> file and automatically appear in the settings with no changes required to existing code.
-            </p>
-          </section>
         </div>
-      </div>
 
-    </main>
-  </div>
-</body>
+        <!-- TAB: ENGINE TUNING -->
+        <div id="tab-engine" class="tab-pane">
+          <header class="topbar">
+            <div>
+              <h1>Engine Tuning</h1>
+              <p>Fine-tune the particle engine properties. All changes are live.</p>
+            </div>
+          </header>
+
+          <div class="settings-grid">
+            <section class="settings-section">
+              <h3>Particle Properties</h3>
+              <div class="sliders-stack">
+                <div class="slider-container">
+                  <div class="slider-header">
+                    <div class="slider-label-group">
+                      <label for="size-slider">Particle Scale</label>
+                      <span class="slider-hint">Controls the size of each particle</span>
+                    </div>
+                    <div class="value-badge" id="size-val">1.0×</div>
+                  </div>
+                  <input type="range" id="size-slider" min="0.1" max="3.0" step="0.1" value="1.0" />
+                  <div class="slider-track-labels"><span>Tiny</span><span>Huge</span></div>
+                </div>
+
+                <div class="slider-container">
+                  <div class="slider-header">
+                    <div class="slider-label-group">
+                      <label for="length-slider">Trail Lifespan</label>
+                      <span class="slider-hint">How long particles linger on screen</span>
+                    </div>
+                    <div class="value-badge" id="length-val">1.0×</div>
+                  </div>
+                  <input
+                    type="range"
+                    id="length-slider"
+                    min="0.1"
+                    max="3.0"
+                    step="0.1"
+                    value="1.0"
+                  />
+                  <div class="slider-track-labels"><span>Short</span><span>Long</span></div>
+                </div>
+
+                <div class="slider-container">
+                  <div class="slider-header">
+                    <div class="slider-label-group">
+                      <label for="opacity-slider">Opacity</label>
+                      <span class="slider-hint">Brightness and visibility of the trail</span>
+                    </div>
+                    <div class="value-badge" id="opacity-val">1.0×</div>
+                  </div>
+                  <input
+                    type="range"
+                    id="opacity-slider"
+                    min="0.1"
+                    max="1.0"
+                    step="0.1"
+                    value="1.0"
+                  />
+                  <div class="slider-track-labels"><span>Subtle</span><span>Vivid</span></div>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <!-- TAB: ABOUT -->
+        <div id="tab-about" class="tab-pane">
+          <header class="topbar">
+            <div>
+              <h1>About Cursora</h1>
+              <p>A beautiful, lightweight cursor effects engine for Windows.</p>
+            </div>
+          </header>
+
+          <div class="settings-grid">
+            <section class="settings-section">
+              <h3>Version Information</h3>
+              <div class="about-card">
+                <div class="version-row">
+                  <span class="label">Cursora</span>
+                  <span class="value accent">v1.0.0</span>
+                </div>
+                <div class="version-row">
+                  <span class="label">Rendering API</span>
+                  <span class="value">WebGL 2.0 · GPU Accelerated</span>
+                </div>
+                <div class="version-row">
+                  <span class="label">Backend</span>
+                  <span class="value">Tauri 2 · Rust</span>
+                </div>
+                <div class="version-row">
+                  <span class="label">Frame Budget</span>
+                  <span class="value">60 fps · Adaptive idle</span>
+                </div>
+                <div class="version-row">
+                  <span class="label">Platform</span>
+                  <span class="value">Windows 10 / 11</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="settings-section">
+              <h3>How it works</h3>
+              <p class="about-text">
+                Cursora renders all effects using <strong>WebGL 2 instanced drawing</strong> — a
+                single GPU draw call renders up to 1,000 particles at 60 fps with minimal CPU
+                overhead.
+              </p>
+              <p class="about-text">
+                The Rust backend uses adaptive polling — tracking the cursor at 120 Hz when active,
+                dropping to 10 Hz during idle — so CPU usage when you're not moving the mouse is
+                effectively zero.
+              </p>
+              <p class="about-text">
+                New effects can be added as a single <code>.ts</code> file and automatically appear
+                in the settings with no changes required to existing code.
+              </p>
+            </section>
+          </div>
+        </div>
+      </main>
+    </div>
+  </body>
 </html>
