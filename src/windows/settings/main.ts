@@ -194,6 +194,11 @@ document.querySelectorAll<HTMLElement>(".nav-item").forEach((item) => {
 
 // ─── Reset ────────────────────────────────────────────────────────
 document.getElementById("reset-btn")?.addEventListener("click", () => {
+  const confirmed = globalThis.confirm(
+    "Reset all settings to defaults? This will apply immediately.",
+  );
+  if (!confirmed) return;
+
   currentConfig = { ...DefaultConfig };
   renderEffectCards();
   renderThemeSwatches();
@@ -202,9 +207,19 @@ document.getElementById("reset-btn")?.addEventListener("click", () => {
 });
 
 // ─── Updates ─────────────────────────────────────────────────────
-document.getElementById("check-updates-btn")?.addEventListener("click", () => {
-  void checkForUpdates({ source: "settings", showNoUpdateDialog: true });
-});
+{
+  const btn = document.getElementById("check-updates-btn") as HTMLButtonElement | null;
+  btn?.addEventListener("click", () => {
+    const prevText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Checking…";
+
+    void checkForUpdates({ source: "settings", showNoUpdateDialog: true }).finally(() => {
+      btn.disabled = false;
+      btn.textContent = prevText;
+    });
+  });
+}
 
 document.getElementById("open-repo-btn")?.addEventListener("click", () => {
   void (async () => {

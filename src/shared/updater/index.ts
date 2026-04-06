@@ -8,7 +8,12 @@ export async function checkForUpdates(options: {
   source: UpdateCheckSource;
   showNoUpdateDialog?: boolean;
 }): Promise<void> {
-  if (import.meta.env.DEV) return;
+  if (import.meta.env.DEV) {
+    if (options.source === "settings") {
+      globalThis.alert("Updates are disabled in dev builds. Build a release to test the updater.");
+    }
+    return;
+  }
 
   if (inFlight) return inFlight;
 

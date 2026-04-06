@@ -211,6 +211,11 @@ body {
   border-color: rgba(248, 113, 113, 0.3);
 }
 
+.settings-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* ─── Main Content ───────────────────────────────────────────────── */
 .content {
   flex: 1;
@@ -609,6 +614,22 @@ input[type="range"]::-webkit-slider-thumb:active {
 .primary-action-btn:hover {
   background: rgba(56, 189, 248, 0.2);
   border-color: rgba(56, 189, 248, 0.35);
+}
+
+.primary-action-btn:disabled,
+.secondary-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.primary-action-btn:disabled:hover {
+  background: var(--accent-dim);
+  border-color: rgba(56, 189, 248, 0.2);
+}
+
+.secondary-action-btn:disabled:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--border-subtle);
 }
 
 .secondary-action-btn {
