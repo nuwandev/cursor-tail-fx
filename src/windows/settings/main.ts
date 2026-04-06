@@ -3,8 +3,12 @@ import { emitConfigUpdate, onConfigUpdate } from "@/shared/ipc/events";
 import { getAllTails } from "@/features/tails";
 import { ThemeRegistry } from "@/shared/config/themes";
 import { checkForUpdates } from "@/shared/updater";
+import { openUrl } from "@tauri-apps/plugin-opener";
+import { invoke } from "@tauri-apps/api/core";
 
 let currentConfig = loadConfig();
+
+const REPO_URL = "https://github.com/nuwandev/cursor-tail-fx";
 
 // Icons keyed by tail id — fallback to generic sparkle if unknown
 const TAIL_ICONS: Record<string, string> = {
@@ -31,7 +35,7 @@ function renderEffectCards() {
   // If saved tail no longer exists (e.g. file deleted), fall back to first
   const validId = tails.some((t) => t.id === currentConfig.tailId)
     ? currentConfig.tailId
-    : tails[0]?.id ?? "comet";
+    : (tails[0]?.id ?? "comet");
 
   if (validId !== currentConfig.tailId) {
     currentConfig.tailId = validId;
@@ -200,6 +204,28 @@ document.getElementById("reset-btn")?.addEventListener("click", () => {
 // ─── Updates ─────────────────────────────────────────────────────
 document.getElementById("check-updates-btn")?.addEventListener("click", () => {
   void checkForUpdates({ source: "settings", showNoUpdateDialog: true });
+});
+
+document.getElementById("open-repo-btn")?.addEventListener("click", () => {
+  void (async () => {
+    try {
+      await openUrl(REPO_URL);
+    } catch (err) {
+      console.error("Failed to open repo link:", err);
+      globalThis.alert("Could not open the GitHub repo.");
+    }
+  })();
+});
+
+document.getElementById("quit-btn")?.addEventListener("click", () => {
+  void (async () => {
+    try {
+      await invoke("quit_app");
+    } catch (err) {
+      console.error("Failed to quit app:", err);
+      globalThis.alert("Could not quit the app.");
+    }
+  })();
 });
 
 // ─── Sync from external config changes ───────────────────────────
