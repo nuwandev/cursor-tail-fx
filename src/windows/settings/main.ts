@@ -2,6 +2,7 @@ import { DefaultConfig, loadConfig, saveConfig, normalizeConfig } from "@/shared
 import { emitConfigUpdate, onConfigUpdate } from "@/shared/ipc/events";
 import { getAllTails } from "@/features/tails";
 import { ThemeRegistry } from "@/shared/config/themes";
+import { checkForUpdates } from "@/shared/updater";
 
 let currentConfig = loadConfig();
 
@@ -194,6 +195,11 @@ document.getElementById("reset-btn")?.addEventListener("click", () => {
   renderThemeSwatches();
   syncSliders();
   broadcastUpdate();
+});
+
+// ─── Updates ─────────────────────────────────────────────────────
+document.getElementById("check-updates-btn")?.addEventListener("click", () => {
+  void checkForUpdates({ source: "settings", showNoUpdateDialog: true });
 });
 
 // ─── Sync from external config changes ───────────────────────────

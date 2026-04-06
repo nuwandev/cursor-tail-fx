@@ -531,3 +531,26 @@ input[type=range]::-webkit-slider-thumb:active {
   padding: 1px 6px;
   color: var(--accent);
 }
+
+.about-actions {
+  margin-top: 12px;
+}
+
+.primary-action-btn {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: var(--radius-md);
+  background: var(--accent-dim);
+  color: var(--accent);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all var(--transition);
+}
+
+.primary-action-btn:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: rgba(56, 189, 248, 0.35);
+}
