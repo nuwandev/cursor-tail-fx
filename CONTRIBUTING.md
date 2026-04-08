@@ -27,13 +27,13 @@ Tauri prerequisites: <https://tauri.app/start/prerequisites/>
 
 ```bash
 npm install
-npm run tauri dev
+npm run tauri -- dev
 ```
 
 ### Scripts
 
-- `npm run tauri dev` — run the full desktop app (overlay + tray + settings)
-- `npm run tauri build` — build and bundle installers/artifacts
+- `npm run tauri -- dev` — run the full desktop app (overlay + tray + settings)
+- `npm run tauri -- build` — build and bundle installers/artifacts
 - `npm run dev` — run the Vite dev server (frontend-only)
 - `npm run build` — typecheck + build the frontend bundle
 - `npm run preview` — preview the built frontend
@@ -41,7 +41,7 @@ npm run tauri dev
 ### Build
 
 ```bash
-npm run tauri build
+npm run tauri -- build
 ```
 
 Tauri bundles are produced under `src-tauri/target/release/bundle/`.
@@ -55,12 +55,17 @@ Configuration is stored in the webview’s local storage under the key:
 Shape (see `src/types/index.ts`):
 
 ```ts
-type AppConfig = {
-  tailId: string;
+type TailSpecificConfig = {
   themeId: string;
   sizeMultiplier: number; // clamped 0.1..5
   lengthMultiplier: number; // clamped 0.1..5
   opacityMultiplier: number; // clamped 0.1..5
+};
+
+type AppConfig = {
+  version: number;
+  activeTailId: string;
+  tailConfigs: Record<string, TailSpecificConfig>; // per-tail settings
 };
 ```
 
@@ -74,11 +79,12 @@ Defaults and normalization live in `src/shared/config/index.ts`.
 - **Overlay window:** `src/windows/overlay/index.html`
   - listens for `cursor-move` and feeds it into the renderer
 - **Renderer:** `src/features/tails/Renderer.ts`
-  - instantiates a tail effect class based on `tailId`
+  - instantiates a tail effect class based on `activeTailId`
   - converts normalized coordinates to canvas pixels
 - **Tail engine:** `src/features/tails/TailEngine.ts`
   - turns mouse travel into spawned particles (batch upload per event)
 - **Settings window:** `src/windows/settings/index.html`
+  - opened from the system tray (created on-demand)
   - updates config and emits `config-update` (applies instantly)
 
 ## Creating a new tail effect (recommended)
@@ -90,7 +96,7 @@ This repo is set up so new effects are easy: add a `*Tail.ts` file + shaders, re
 1. Copy one of the existing tails (e.g. `CometTail.ts`) and rename it.
 2. Copy the matching shaders and tweak the visuals.
 3. Update the `registerTail({ id, name, description, class })` metadata.
-4. Run `npm run tauri dev` → open Settings → your effect should be listed under **Effects**.
+4. Run `npm run tauri -- dev` → open Settings → your effect should be listed under **Effects**.
 
 ### 1) Create a new `*Tail.ts` file
 
@@ -149,7 +155,7 @@ All files matching `src/features/tails/*Tail.ts` are eagerly imported by `src/fe
 Run:
 
 ```bash
-npm run tauri dev
+npm run tauri -- dev
 ```
 
 Then open Settings from the tray and check **Effects**.
@@ -169,12 +175,6 @@ Tails share the same per-instance attributes and core uniforms (defined in `src/
 - Uniforms: `u_resolution`, `u_time`, `u_sizeMultiplier`, `u_lengthMultiplier`, `u_opacityMultiplier`
 
 Need extra uniforms? Override `setupCustomUniforms()` and `applyCustomUniforms()` in your tail class.
-
-### Optional: add an icon
-
-Settings uses per-tail icons keyed by `id`. Unknown ids fall back to a generic icon.
-
-To add a custom icon, add your tail `id` to `TAIL_ICONS` in `src/windows/settings/main.ts`.
 
 ## Adding a new theme
 

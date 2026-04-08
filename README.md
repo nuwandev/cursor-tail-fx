@@ -13,7 +13,7 @@ Cursora runs as a click‑through overlay and renders particle trails using inst
 
 - Click‑through always‑on‑top overlay (multi‑monitor aware)
 - Live settings UI (effect, theme, engine tuning)
-- Tail effects are plug‑ins: add one `*Tail.ts` file and it auto‑appears in Settings
+- Tail effects are plug‑ins: add one `*Tail.ts` file (+ shaders) and it auto‑appears in Settings
 - GPU friendly: WebGL2 instanced particles, capped to 60 fps
 
 ## Platform support
