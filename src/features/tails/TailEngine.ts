@@ -1,5 +1,5 @@
 import { BaseTail } from "./BaseTail";
-import type { AppConfig } from "@/types";
+import type { TailSpecificConfig } from "@/types";
 
 // Spawn a particle every 4px of mouse travel (was 2px).
 // Halves particle count with imperceptible visual difference.
@@ -51,7 +51,7 @@ export class TailEngine {
     this.lastMouse = { x, y };
   }
 
-  updateConfig(config: AppConfig): void {
+  updateConfig(config: TailSpecificConfig): void {
     this.tail.updateConfig(config);
   }
 

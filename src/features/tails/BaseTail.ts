@@ -1,4 +1,4 @@
-import { AppConfig } from "@/types";
+import { TailSpecificConfig } from "@/types";
 import { getThemeById } from "@/shared/config/themes";
 
 // Reduced from 2000 → 1000: still plenty for smooth trails, halves GPU buffer size
@@ -48,7 +48,7 @@ export abstract class BaseTail {
   // Debounce handle for resize
   private resizeTimer: ReturnType<typeof setTimeout> | null = null;
 
-  protected config: AppConfig;
+  protected config: TailSpecificConfig;
 
   protected locs = {
     u_resolution: null as WebGLUniformLocation | null,
@@ -61,7 +61,7 @@ export abstract class BaseTail {
   protected quadBuffer: WebGLBuffer;
   protected vao: WebGLVertexArrayObject;
 
-  constructor(canvas: HTMLCanvasElement, config: AppConfig) {
+  constructor(canvas: HTMLCanvasElement, config: TailSpecificConfig) {
     this.canvas = canvas;
     this.config = config;
 
@@ -229,7 +229,7 @@ export abstract class BaseTail {
     return shader;
   }
 
-  public updateConfig(config: AppConfig): void {
+  public updateConfig(config: TailSpecificConfig): void {
     this.config = config;
     // Re-cache the theme color so subsequent particles use the new color immediately
     this.cacheThemeColor();

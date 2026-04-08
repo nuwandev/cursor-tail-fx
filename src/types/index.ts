@@ -9,15 +9,23 @@ export interface ThemeMeta {
   rgb: [number, number, number];
 }
 
-export interface AppConfig {
-  tailId: string;
+export const CURRENT_CONFIG_VERSION = 1;
+
+export interface TailSpecificConfig {
   themeId: ThemeId;
   sizeMultiplier: number;
   lengthMultiplier: number;
   opacityMultiplier: number;
 }
 
-export type ConfigOverrides = Partial<AppConfig>;
+export interface AppConfig {
+  version: number;
+  activeTailId: string;
+  tailConfigs: Record<string, TailSpecificConfig>;
+}
+
+// Support backwards compatibility typing if any files expect it directly
+export type ConfigOverrides = Partial<TailSpecificConfig>;
 
 // 2. Event Types
 export const Events = {
@@ -36,7 +44,7 @@ export type ConfigUpdatePayload = AppConfig;
 // 3. Tail Registry Types
 import type { BaseTail } from "@/features/tails/BaseTail";
 
-export type TailClass = new (canvas: HTMLCanvasElement, config: AppConfig) => BaseTail;
+export type TailClass = new (canvas: HTMLCanvasElement, config: TailSpecificConfig) => BaseTail;
 
 export interface TailMeta {
   id: string;

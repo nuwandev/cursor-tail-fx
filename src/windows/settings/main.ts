@@ -1,4 +1,4 @@
-import { DefaultConfig, loadConfig, saveConfig, normalizeConfig } from "@/shared/config";
+import { configManager } from "@/shared/config";
 import { emitConfigUpdate, onConfigUpdate } from "@/shared/ipc/events";
 import { getAllTails } from "@/features/tails";
 import { ThemeRegistry } from "@/shared/config/themes";
@@ -6,7 +6,9 @@ import { checkForUpdates } from "@/shared/updater";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { invoke } from "@tauri-apps/api/core";
 
-let currentConfig = loadConfig();
+// Keep a local cached view of the current tail config being edited safely cloned from state manager
+let activeTailId = configManager.getState().activeTailId;
+let currentTailConfig = configManager.getTailConfig(activeTailId);
 
 const REPO_URL = "https://github.com/nuwandev/cursor-tail-fx";
 
@@ -21,8 +23,18 @@ const TAIL_ICONS: Record<string, string> = {
 const GENERIC_ICON = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>`;
 
 function broadcastUpdate() {
-  saveConfig(currentConfig);
-  emitConfigUpdate(currentConfig);
+  emitConfigUpdate(configManager.getState());
+}
+
+function handleTailSwitch(tailId: string) {
+  configManager.setActiveTailId(tailId);
+  activeTailId = tailId;
+  currentTailConfig = configManager.getTailConfig(tailId);
+  
+  renderEffectCards();
+  renderThemeSwatches();
+  syncSliders();
+  broadcastUpdate();
 }
 
 function renderEffectCards() {
@@ -30,16 +42,15 @@ function renderEffectCards() {
   effectCards.innerHTML = "";
 
   const tails = getAllTails();
-  currentConfig = normalizeConfig(currentConfig);
 
-  // If saved tail no longer exists (e.g. file deleted), fall back to first
-  const validId = tails.some((t) => t.id === currentConfig.tailId)
-    ? currentConfig.tailId
+  // If saved tail no longer exists, fall back to first safely
+  const validId = tails.some((t) => t.id === activeTailId)
+    ? activeTailId
     : (tails[0]?.id ?? "comet");
 
-  if (validId !== currentConfig.tailId) {
-    currentConfig.tailId = validId;
-    broadcastUpdate();
+  if (validId !== activeTailId) {
+    handleTailSwitch(validId);
+    return;
   }
 
   tails.forEach((tail) => {
@@ -51,17 +62,11 @@ function renderEffectCards() {
     input.name = "tailId";
     input.value = tail.id;
     input.id = `effect-radio-${tail.id}`;
-    if (tail.id === currentConfig.tailId) input.checked = true;
+    if (tail.id === activeTailId) input.checked = true;
 
     input.addEventListener("change", () => {
       if (input.checked) {
-        currentConfig.tailId = tail.id;
-        broadcastUpdate();
-        // Update selected state without full re-render (avoid flash)
-        document.querySelectorAll(".radio-card input[type=radio]").forEach((r) => {
-          const content = (r as HTMLInputElement).parentElement?.querySelector(".card-content");
-          content?.classList.toggle("_checked", (r as HTMLInputElement).checked);
-        });
+        handleTailSwitch(tail.id);
       }
     });
 
@@ -105,21 +110,19 @@ function renderThemeSwatches() {
     input.type = "radio";
     input.name = "theme";
     input.value = theme.id;
-    if (theme.id === currentConfig.themeId) input.checked = true;
+    if (theme.id === currentTailConfig.themeId) input.checked = true;
 
     input.addEventListener("change", () => {
       if (input.checked) {
-        currentConfig.themeId = theme.id;
+        configManager.updateTailConfig(activeTailId, { themeId: theme.id });
+        currentTailConfig = configManager.getTailConfig(activeTailId);
         broadcastUpdate();
       }
     });
 
     const [r, g, b] = theme.rgb;
-    const r255 = Math.round(r * 255);
-    const g255 = Math.round(g * 255);
-    const b255 = Math.round(b * 255);
-    const color = `rgb(${r255}, ${g255}, ${b255})`;
-    const glow = `rgba(${r255}, ${g255}, ${b255}, 0.5)`;
+    const color = `rgb(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)})`;
+    const glow = `rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, 0.5)`;
 
     const wrapper = document.createElement("div");
     wrapper.className = "swatch-wrapper";
@@ -130,7 +133,6 @@ function renderThemeSwatches() {
     swatch.style.boxShadow = `0 0 10px ${glow}`;
 
     wrapper.appendChild(swatch);
-
     const name = document.createElement("span");
     name.textContent = theme.name;
 
@@ -150,32 +152,38 @@ const lengthVal = document.getElementById("length-val") as HTMLElement;
 const opacityVal = document.getElementById("opacity-val") as HTMLElement;
 
 function updateLabels() {
-  sizeVal.innerText = `${currentConfig.sizeMultiplier.toFixed(1)}×`;
-  lengthVal.innerText = `${currentConfig.lengthMultiplier.toFixed(1)}×`;
-  opacityVal.innerText = `${currentConfig.opacityMultiplier.toFixed(1)}×`;
+  sizeVal.innerText = `${currentTailConfig.sizeMultiplier.toFixed(1)}×`;
+  lengthVal.innerText = `${currentTailConfig.lengthMultiplier.toFixed(1)}×`;
+  opacityVal.innerText = `${currentTailConfig.opacityMultiplier.toFixed(1)}×`;
 }
 
 function syncSliders() {
-  sizeSlider.value = currentConfig.sizeMultiplier.toString();
-  lengthSlider.value = currentConfig.lengthMultiplier.toString();
-  opacitySlider.value = currentConfig.opacityMultiplier.toString();
+  sizeSlider.value = currentTailConfig.sizeMultiplier.toString();
+  lengthSlider.value = currentTailConfig.lengthMultiplier.toString();
+  opacitySlider.value = currentTailConfig.opacityMultiplier.toString();
   updateLabels();
 }
 
 sizeSlider.addEventListener("input", (e) => {
-  currentConfig.sizeMultiplier = parseFloat((e.target as HTMLInputElement).value);
+  const val = parseFloat((e.target as HTMLInputElement).value);
+  configManager.updateTailConfig(activeTailId, { sizeMultiplier: val });
+  currentTailConfig = configManager.getTailConfig(activeTailId);
   updateLabels();
 });
 sizeSlider.addEventListener("change", () => broadcastUpdate());
 
 lengthSlider.addEventListener("input", (e) => {
-  currentConfig.lengthMultiplier = parseFloat((e.target as HTMLInputElement).value);
+  const val = parseFloat((e.target as HTMLInputElement).value);
+  configManager.updateTailConfig(activeTailId, { lengthMultiplier: val });
+  currentTailConfig = configManager.getTailConfig(activeTailId);
   updateLabels();
 });
 lengthSlider.addEventListener("change", () => broadcastUpdate());
 
 opacitySlider.addEventListener("input", (e) => {
-  currentConfig.opacityMultiplier = parseFloat((e.target as HTMLInputElement).value);
+  const val = parseFloat((e.target as HTMLInputElement).value);
+  configManager.updateTailConfig(activeTailId, { opacityMultiplier: val });
+  currentTailConfig = configManager.getTailConfig(activeTailId);
   updateLabels();
 });
 opacitySlider.addEventListener("change", () => broadcastUpdate());
@@ -195,11 +203,12 @@ document.querySelectorAll<HTMLElement>(".nav-item").forEach((item) => {
 // ─── Reset ────────────────────────────────────────────────────────
 document.getElementById("reset-btn")?.addEventListener("click", () => {
   const confirmed = globalThis.confirm(
-    "Reset all settings to defaults? This will apply immediately.",
+    "Reset the settings for THIS tail to defaults? This will apply immediately."
   );
   if (!confirmed) return;
 
-  currentConfig = { ...DefaultConfig };
+  configManager.resetTailConfig(activeTailId);
+  currentTailConfig = configManager.getTailConfig(activeTailId);
   renderEffectCards();
   renderThemeSwatches();
   syncSliders();
@@ -245,7 +254,10 @@ document.getElementById("quit-btn")?.addEventListener("click", () => {
 
 // ─── Sync from external config changes ───────────────────────────
 onConfigUpdate((config) => {
-  currentConfig = normalizeConfig(config);
+  configManager.applyExternalConfig(config);
+  activeTailId = configManager.getState().activeTailId;
+  currentTailConfig = configManager.getTailConfig(activeTailId);
+
   renderEffectCards();
   renderThemeSwatches();
   syncSliders();

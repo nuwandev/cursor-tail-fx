@@ -1,4 +1,3 @@
-import { normalizeConfig } from "@/shared/config";
 import type { AppConfig } from "@/types";
 import { getTailSafe } from "@/features/tails";
 import { TailEngine } from "@/features/tails/TailEngine";
@@ -13,28 +12,37 @@ export class Renderer {
   constructor(canvas: HTMLCanvasElement, config: AppConfig) {
     if (!canvas) throw new Error("Renderer: canvas is required");
     this.canvas = canvas;
-    this.config = normalizeConfig(config);
-    this.initTail(this.config.tailId);
+    this.config = config;
+    this.initTail(this.config.activeTailId);
   }
 
   private initTail(tailId: string) {
     // Always destroy previous
     this.destroy();
     let TailClass;
+    let safeTailId = tailId;
     try {
       TailClass = getTailSafe(tailId);
     } catch {
       TailClass = getTailSafe("comet");
+      safeTailId = "comet";
     }
+    
+    // Extract specific config natively
+    let tailConfig = this.config.tailConfigs[safeTailId];
+    if (!tailConfig) {
+      tailConfig = { themeId: "cyan", sizeMultiplier: 1.0, lengthMultiplier: 1.0, opacityMultiplier: 1.0 };
+    }
+    
     try {
-      this.tail = new TailClass(this.canvas, this.config);
+      this.tail = new TailClass(this.canvas, tailConfig);
     } catch (e) {
       console.error("FAILING TO INSTANTIATE TAIL:", e);
       // fallback to comet if instantiation fails
       TailClass = getTailSafe("comet");
-      this.tail = new TailClass(this.canvas, this.config);
+      this.tail = new TailClass(this.canvas, tailConfig);
     }
-    this.tail!.updateConfig(this.config);
+    this.tail!.updateConfig(tailConfig);
     this.engine = new TailEngine(this.tail!);
   }
 
@@ -46,13 +54,15 @@ export class Renderer {
   }
 
   handleConfigUpdate(newConfig: AppConfig) {
-    const normalized = normalizeConfig(newConfig);
-    if (normalized.tailId === this.config.tailId) {
-      this.config = normalized;
-      this.engine?.updateConfig(this.config);
+    if (newConfig.activeTailId !== this.config.activeTailId) {
+      this.config = newConfig;
+      this.initTail(newConfig.activeTailId);
     } else {
-      this.config = normalized;
-      this.initTail(normalized.tailId);
+      this.config = newConfig;
+      const tailConfig = newConfig.tailConfigs[newConfig.activeTailId];
+      if (tailConfig) {
+         this.engine?.updateConfig(tailConfig);
+      }
     }
   }
 
