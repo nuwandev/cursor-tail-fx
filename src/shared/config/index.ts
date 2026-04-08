@@ -3,19 +3,18 @@ import { CURRENT_CONFIG_VERSION } from "@/types";
 
 export function getIdealDefault(tailId: string): TailSpecificConfig {
   const SPECIFIC_DEFAULT_CONFIGS: Record<string, Partial<TailSpecificConfig>> = {
-    "comet": { themeId: "cyan", sizeMultiplier: 1.0 },
-    "orb": { themeId: "yellow", sizeMultiplier: 1.5, lengthMultiplier: 0.5 },
-    "sparkle": { themeId: "white", sizeMultiplier: 1.0, lengthMultiplier: 0.8 },
-    "bubble": { themeId: "magenta", sizeMultiplier: 1.5 },
-    "clean-minimal": { themeId: "cyan", sizeMultiplier: 0.5, lengthMultiplier: 0.5 },
-    "neon-pulse": { themeId: "magenta", sizeMultiplier: 1.5, lengthMultiplier: 1.5, opacityMultiplier: 0.9 },
-    "spark-burst": { themeId: "yellow", sizeMultiplier: 2.0, lengthMultiplier: 0.8 },
-    "soft-glow": { themeId: "cyan", sizeMultiplier: 3.5, opacityMultiplier: 0.8 },
-    "magic-rune": { themeId: "green", sizeMultiplier: 1.5, lengthMultiplier: 1.0, opacityMultiplier: 0.9 },
-    "gamer-hud": { themeId: "red", sizeMultiplier: 1.2, lengthMultiplier: 1.2 },
-    "liquid-wave": { themeId: "blue", sizeMultiplier: 1.5, lengthMultiplier: 2.0 },
-    "retro-pixel": { themeId: "green", sizeMultiplier: 2.0, opacityMultiplier: 0.8 },
-    "glass-fade": { themeId: "white", sizeMultiplier: 1.8, lengthMultiplier: 1.5, opacityMultiplier: 0.6 },
+    "clean-minimal": { lengthMultiplier: 3, opacityMultiplier: 1, sizeMultiplier: 1.6, themeId: "cyan" },
+    "comet": { lengthMultiplier: 1, opacityMultiplier: 1, sizeMultiplier: 0.4, themeId: "cyan" },
+    "gamer-hud": { lengthMultiplier: 0.9, opacityMultiplier: 1, sizeMultiplier: 0.6, themeId: "gold" },
+    "glass-fade": { lengthMultiplier: 0.4, opacityMultiplier: 0.6, sizeMultiplier: 0.9, themeId: "white" },
+    "liquid-wave": { lengthMultiplier: 0.4, opacityMultiplier: 1, sizeMultiplier: 0.5, themeId: "blue" },
+    "magic-rune": { lengthMultiplier: 1, opacityMultiplier: 0.9, sizeMultiplier: 0.5, themeId: "neon" },
+    "neon-pulse": { lengthMultiplier: 0.3, opacityMultiplier: 0.9, sizeMultiplier: 0.4, themeId: "fire" },
+    "orb": { lengthMultiplier: 0.8, opacityMultiplier: 1, sizeMultiplier: 0.3, themeId: "minimal" },
+    "retro-pixel": { lengthMultiplier: 0.8, opacityMultiplier: 0.8, sizeMultiplier: 0.6, themeId: "green" },
+    "soft-glow": { lengthMultiplier: 0.6, opacityMultiplier: 0.5, sizeMultiplier: 0.2, themeId: "neon" },
+    "spark-burst": { lengthMultiplier: 1.2, opacityMultiplier: 1, sizeMultiplier: 1.4, themeId: "yellow" },
+    "sparkle": { lengthMultiplier: 0.2, opacityMultiplier: 1, sizeMultiplier: 0.5, themeId: "white" }
   };
 
   const specific = SPECIFIC_DEFAULT_CONFIGS[tailId] || {};
