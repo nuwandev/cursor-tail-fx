@@ -5,22 +5,15 @@ import { ThemeRegistry } from "@/shared/config/themes";
 import { checkForUpdates } from "@/shared/updater";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { invoke } from "@tauri-apps/api/core";
+import { PreviewManager } from "./PreviewManager";
 
 // Keep a local cached view of the current tail config being edited safely cloned from state manager
 let activeTailId = configManager.getState().activeTailId;
 let currentTailConfig = configManager.getTailConfig(activeTailId);
 
+const previewManager = new PreviewManager();
+
 const REPO_URL = "https://github.com/nuwandev/cursor-tail-fx";
-
-// Icons keyed by tail id — fallback to generic sparkle if unknown
-const TAIL_ICONS: Record<string, string> = {
-  comet: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 22L12 18L22 22L12 2Z"/></svg>`,
-  orb: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>`,
-  sparkle: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3m0 12v3M3 12h3m12 0h3M5.6 5.6l2.1 2.1m8.6 8.6 2.1 2.1M5.6 18.4l2.1-2.1m8.6-8.6 2.1-2.1"/></svg>`,
-  bubble: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="9" r="1.5" fill="currentColor"/><circle cx="15" cy="11" r="1" fill="currentColor"/></svg>`,
-};
-
-const GENERIC_ICON = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>`;
 
 function broadcastUpdate() {
   emitConfigUpdate(configManager.getState());
@@ -31,7 +24,14 @@ function handleTailSwitch(tailId: string) {
   activeTailId = tailId;
   currentTailConfig = configManager.getTailConfig(tailId);
   
+  previewManager.destroyAll();
   renderEffectCards();
+  
+  void (async () => {
+    await previewManager.init(document.getElementById("effect-cards")!);
+    previewManager.startAll();
+  })();
+  
   renderThemeSwatches();
   syncSliders();
   broadcastUpdate();
@@ -73,9 +73,11 @@ function renderEffectCards() {
     const cardContent = document.createElement("div");
     cardContent.className = "card-content";
 
-    const icon = document.createElement("div");
-    icon.className = "card-icon";
-    icon.innerHTML = TAIL_ICONS[tail.id] ?? GENERIC_ICON;
+    const canvas = document.createElement("canvas");
+    canvas.className = "tail-preview-canvas";
+    canvas.width = 280;
+    canvas.height = 100;
+    canvas.dataset.tailId = tail.id;
 
     const info = document.createElement("div");
     info.className = "card-info";
@@ -90,7 +92,7 @@ function renderEffectCards() {
 
     info.appendChild(title);
     info.appendChild(desc);
-    cardContent.appendChild(icon);
+    cardContent.appendChild(canvas);
     cardContent.appendChild(info);
     label.appendChild(input);
     label.appendChild(cardContent);
@@ -117,6 +119,7 @@ function renderThemeSwatches() {
         configManager.updateTailConfig(activeTailId, { themeId: theme.id });
         currentTailConfig = configManager.getTailConfig(activeTailId);
         broadcastUpdate();
+        previewManager.updateConfigForId(activeTailId, currentTailConfig);
       }
     });
 
@@ -169,6 +172,7 @@ sizeSlider.addEventListener("input", (e) => {
   configManager.updateTailConfig(activeTailId, { sizeMultiplier: val });
   currentTailConfig = configManager.getTailConfig(activeTailId);
   updateLabels();
+  previewManager.updateConfigForId(activeTailId, currentTailConfig);
 });
 sizeSlider.addEventListener("change", () => broadcastUpdate());
 
@@ -177,6 +181,7 @@ lengthSlider.addEventListener("input", (e) => {
   configManager.updateTailConfig(activeTailId, { lengthMultiplier: val });
   currentTailConfig = configManager.getTailConfig(activeTailId);
   updateLabels();
+  previewManager.updateConfigForId(activeTailId, currentTailConfig);
 });
 lengthSlider.addEventListener("change", () => broadcastUpdate());
 
@@ -185,6 +190,7 @@ opacitySlider.addEventListener("input", (e) => {
   configManager.updateTailConfig(activeTailId, { opacityMultiplier: val });
   currentTailConfig = configManager.getTailConfig(activeTailId);
   updateLabels();
+  previewManager.updateConfigForId(activeTailId, currentTailConfig);
 });
 opacitySlider.addEventListener("change", () => broadcastUpdate());
 
@@ -209,7 +215,14 @@ document.getElementById("reset-btn")?.addEventListener("click", () => {
 
   configManager.resetTailConfig(activeTailId);
   currentTailConfig = configManager.getTailConfig(activeTailId);
+  
+  previewManager.destroyAll();
   renderEffectCards();
+  void (async () => {
+    await previewManager.init(document.getElementById("effect-cards")!);
+    previewManager.startAll();
+  })();
+  
   renderThemeSwatches();
   syncSliders();
   broadcastUpdate();
@@ -258,14 +271,31 @@ onConfigUpdate((config) => {
   activeTailId = configManager.getState().activeTailId;
   currentTailConfig = configManager.getTailConfig(activeTailId);
 
+  previewManager.destroyAll();
   renderEffectCards();
+  void (async () => {
+    await previewManager.init(document.getElementById("effect-cards")!);
+    previewManager.startAll();
+  })();
+  
   renderThemeSwatches();
   syncSliders();
 });
 
 // ─── Init ─────────────────────────────────────────────────────────
+async function initPreviews() {
+  const container = document.getElementById("effect-cards")!;
+  await previewManager.init(container);
+  previewManager.startAll();
+}
+
+window.addEventListener("beforeunload", () => {
+  previewManager.destroyAll();
+});
+
 document.addEventListener("DOMContentLoaded", () => {
   renderEffectCards();
+  void initPreviews();
   renderThemeSwatches();
   syncSliders();
   broadcastUpdate();
