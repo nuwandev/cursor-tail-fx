@@ -13,32 +13,57 @@ uniform float u_lengthMultiplier;
 
 out vec4 v_color;
 out vec2 v_uv;
-flat out int v_id;
+out float v_rotation;
+out float v_life;
+
+float hash(float n) { return fract(sin(n) * 43758.5453); }
 
 void main() {
     float age = u_time - i_spawnTime;
-    float expectedLife = max(i_lifeTime * u_lengthMultiplier * 1.2, 0.001);
+    float expectedLife = max(i_lifeTime * u_lengthMultiplier * 1.4, 0.001);
     float lifeRatio = age / expectedLife;
-    
-    // Sparse spawning: Only drop rare runes (1 in 10 particles)
-    if (lifeRatio < 0.0 || lifeRatio >= 1.0 || (gl_InstanceID % 10) != 0) {
-        gl_Position = vec4(-2.0, -2.0, 0.0, 1.0); return;
+
+    float id = float(gl_InstanceID);
+
+    // Only 1 in 6 particles becomes a rune — they should feel rare and precious
+    if (lifeRatio < 0.0 || lifeRatio >= 1.0 || mod(id, 6.0) != 0.0) {
+        gl_Position = vec4(-2.0, -2.0, 0.0, 1.0);
+        return;
     }
-    
-    // Magical swirling outward orbit drift
-    float angle = age * 0.005 + float(gl_InstanceID);
-    vec2 swirl = vec2(cos(angle), sin(angle)) * (age / 30.0);
-    vec2 pos = i_position + swirl + i_velocity * (age / 2000.0);
-    
-    float size = 18.0 * u_sizeMultiplier * (1.1 - lifeRatio);
-    // Smooth pulsing alpha over its life
-    float alpha = (1.0 - lifeRatio) * (0.6 + 0.4 * sin(age * 0.01));
-    
+
+    float rnd = hash(id * 1.618);
+
+    // Rune floats upward (opposite gravity) with a gentle side drift
+    // — magical sigils should rise, not fall
+    float rise  = age * (0.02 + rnd * 0.015);
+    float sway  = sin(age * 0.004 + rnd * 6.28) * 8.0;
+    vec2  pos   = i_position + vec2(sway, -rise);
+
+    // Unique constant spin per rune (some slow, some fast, some reverse)
+    float spinDir  = (rnd > 0.5) ? 1.0 : -1.0;
+    float spinRate = (0.003 + rnd * 0.006) * spinDir;
+    float rotation = age * spinRate + rnd * 6.28318;
+
+    // Materialises instantly, then fades out in the last 30% of life
+    float fadeIn  = min(age / 80.0, 1.0);
+    float fadeOut = 1.0 - smoothstep(0.7, 1.0, lifeRatio);
+    float alpha   = fadeIn * fadeOut * (0.7 + 0.3 * sin(age * 0.008));
+
+    float size = 20.0 * u_sizeMultiplier * (0.8 + 0.2 * sin(age * 0.005)) * fadeOut;
+
     vec2 finalPos = pos + a_quadPos * size;
-    vec2 clipSpace = vec2((finalPos.x / u_resolution.x) * 2.0 - 1.0, 1.0 - (finalPos.y / u_resolution.y) * 2.0);
+    vec2 clipSpace = vec2(
+        (finalPos.x / u_resolution.x) * 2.0 - 1.0,
+        1.0 - (finalPos.y / u_resolution.y) * 2.0
+    );
+
     gl_Position = vec4(clipSpace, 0.0, 1.0);
-    
-    v_color = vec4(i_color, alpha);
-    v_uv = a_quadPos;
-    v_id = gl_InstanceID;
+
+    // Shift color slightly per rune — makes them feel like different sigils
+    vec3 col = mix(i_color, i_color.brg, rnd * 0.35);
+
+    v_rotation = rotation;
+    v_life     = lifeRatio;
+    v_color    = vec4(col, alpha);
+    v_uv       = a_quadPos;
 }
