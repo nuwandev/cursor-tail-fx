@@ -1,6 +1,7 @@
 import { getAllTails } from "@/features/tails";
 import { TailEngine } from "@/features/tails/TailEngine";
 import type { BaseTail } from "@/features/tails/BaseTail";
+import type { TailSpecificConfig } from "@/types";
 import { configManager } from "@/shared/config";
 
 interface PreviewEntry {
@@ -174,7 +175,7 @@ export class PreviewManager {
     this.resumeForId(tailId);
   }
 
-  updateConfigForId(tailId: string, config: any) {
+  updateConfigForId(tailId: string, config: TailSpecificConfig) {
     const entry = this.entries.get(tailId);
     if (entry) {
       entry.engine.updateConfig(config);

@@ -108,20 +108,39 @@ class ConfigManager {
     this.initialized = true;
   }
 
-  private migrate(stored: any): AppConfig {
-    if (stored.version == null || stored.version < CURRENT_CONFIG_VERSION) {
+  private migrate(stored: unknown): AppConfig {
+    const legacy = stored as Partial<AppConfig> & {
+      tailId?: string;
+      tailConfigs?: Record<string, Partial<TailSpecificConfig>>;
+      themeId?: string;
+      sizeMultiplier?: number;
+      lengthMultiplier?: number;
+      opacityMultiplier?: number;
+    };
+
+    if (legacy.version == null || legacy.version < CURRENT_CONFIG_VERSION) {
       const newState = structuredClone(DEFAULT_APP_CONFIG);
-      this.applyLegacyState(newState, stored);
+      this.applyLegacyState(newState, legacy);
       newState.version = CURRENT_CONFIG_VERSION;
       this.state = newState;
       this.saveNow();
       return newState;
     }
 
-    return stored as AppConfig;
+    return legacy as AppConfig;
   }
 
-  private applyLegacyState(newState: AppConfig, stored: any): void {
+  private applyLegacyState(
+    newState: AppConfig,
+    stored: Partial<AppConfig> & {
+      tailId?: string;
+      tailConfigs?: Record<string, Partial<TailSpecificConfig>>;
+      themeId?: string;
+      sizeMultiplier?: number;
+      lengthMultiplier?: number;
+      opacityMultiplier?: number;
+    },
+  ): void {
     if (stored.tailId) {
       newState.activeTailId = stored.tailId;
     }
@@ -140,7 +159,15 @@ class ConfigManager {
     newState.tailConfigs = normalizedTailConfigs;
   }
 
-  private buildLegacyTailConfig(tailId: string, stored: any): TailSpecificConfig {
+  private buildLegacyTailConfig(
+    tailId: string,
+    stored: {
+      themeId?: string;
+      sizeMultiplier?: number;
+      lengthMultiplier?: number;
+      opacityMultiplier?: number;
+    },
+  ): TailSpecificConfig {
     const defaults = getIdealDefault(tailId);
 
     return {
