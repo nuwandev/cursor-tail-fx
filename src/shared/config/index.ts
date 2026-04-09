@@ -73,6 +73,7 @@ export function getIdealDefault(tailId: string): TailSpecificConfig {
 
 export const DEFAULT_APP_CONFIG: AppConfig = {
   version: CURRENT_CONFIG_VERSION,
+  tailEnabled: true,
   activeTailId: "comet",
   tailConfigs: {},
 };
@@ -127,7 +128,22 @@ class ConfigManager {
       return newState;
     }
 
-    return legacy as AppConfig;
+    // Stored config is already at the current version; still normalize any
+    // missing fields defensively (e.g. older builds that wrote partial config).
+    const normalized = legacy as AppConfig;
+    if (typeof (normalized as any).tailEnabled !== "boolean") {
+      (normalized as any).tailEnabled = true;
+    }
+    if (typeof (normalized as any).activeTailId !== "string") {
+      (normalized as any).activeTailId = DEFAULT_APP_CONFIG.activeTailId;
+    }
+    if (
+      typeof (normalized as any).tailConfigs !== "object" ||
+      (normalized as any).tailConfigs == null
+    ) {
+      (normalized as any).tailConfigs = {};
+    }
+    return normalized;
   }
 
   private applyLegacyState(
@@ -141,7 +157,15 @@ class ConfigManager {
       opacityMultiplier?: number;
     },
   ): void {
-    if (stored.tailId) {
+    // If a legacy build happened to store this flag, keep it. Otherwise default.
+    if (typeof (stored as any).tailEnabled === "boolean") {
+      newState.tailEnabled = (stored as any).tailEnabled as boolean;
+    }
+
+    // v1+ uses activeTailId; very old builds used tailId
+    if (typeof stored.activeTailId === "string" && stored.activeTailId.length > 0) {
+      newState.activeTailId = stored.activeTailId;
+    } else if (stored.tailId) {
       newState.activeTailId = stored.tailId;
     }
 
@@ -236,6 +260,12 @@ class ConfigManager {
   public setActiveTailId(tailId: string): void {
     if (!this.initialized) this.init();
     this.state.activeTailId = tailId;
+    this.save();
+  }
+
+  public setTailEnabled(enabled: boolean): void {
+    if (!this.initialized) this.init();
+    this.state.tailEnabled = Boolean(enabled);
     this.save();
   }
 

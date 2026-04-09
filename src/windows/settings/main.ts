@@ -13,9 +13,24 @@ const previewManager = new PreviewManager();
 
 const REPO_URL = "https://github.com/nuwandev/cursor-tail-fx";
 
+const tailToggleBtn = document.getElementById("tail-toggle-btn") as HTMLButtonElement | null;
+
+function syncTailToggleButton(): void {
+  if (!tailToggleBtn) return;
+  const enabled = configManager.getState().tailEnabled !== false;
+  tailToggleBtn.textContent = enabled ? "Disable Tail Effect" : "Enable Tail Effect";
+}
+
 function broadcastUpdate() {
   emitConfigUpdate(configManager.getState());
 }
+
+tailToggleBtn?.addEventListener("click", () => {
+  const current = configManager.getState();
+  configManager.setTailEnabled(!current.tailEnabled);
+  syncTailToggleButton();
+  broadcastUpdate();
+});
 
 function handleTailSwitch(tailId: string) {
   configManager.setActiveTailId(tailId);
@@ -263,6 +278,7 @@ onConfigUpdate((config) => {
 
   renderThemeSwatches();
   syncSliders();
+  syncTailToggleButton();
 });
 
 // ─── Init ─────────────────────────────────────────────────────────
@@ -281,5 +297,6 @@ document.addEventListener("DOMContentLoaded", () => {
   void initPreviews();
   renderThemeSwatches();
   syncSliders();
+  syncTailToggleButton();
   broadcastUpdate();
 });

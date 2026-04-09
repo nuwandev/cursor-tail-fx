@@ -1,6 +1,12 @@
 import { listen, emit } from "@tauri-apps/api/event";
 import { Events } from "@/types";
 import type { AppConfig, CursorMovePayload } from "@/types";
+
+export function onTrayToggleTail(callback: () => void): void {
+  listen<unknown>(Events.TrayToggleTail, () => {
+    callback();
+  });
+}
 export function onCursorMove(callback: (nx: number, ny: number) => void): void {
   listen<CursorMovePayload>(Events.CursorMove, (event) => {
     if (

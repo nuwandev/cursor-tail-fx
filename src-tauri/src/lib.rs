@@ -1,8 +1,50 @@
 use tauri::Manager;
 
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Condvar, Mutex};
+
+struct TailGate {
+    enabled: AtomicBool,
+    wait_lock: Mutex<()>,
+    cv: Condvar,
+}
+
+impl TailGate {
+    fn new(enabled: bool) -> Self {
+        Self {
+            enabled: AtomicBool::new(enabled),
+            wait_lock: Mutex::new(()),
+            cv: Condvar::new(),
+        }
+    }
+
+    fn set_enabled(&self, enabled: bool) {
+        self.enabled.store(enabled, Ordering::Relaxed);
+        if enabled {
+            self.cv.notify_all();
+        }
+    }
+
+    fn is_enabled(&self) -> bool {
+        self.enabled.load(Ordering::Relaxed)
+    }
+
+    fn wait_until_enabled(&self) {
+        let mut guard = self.wait_lock.lock().unwrap();
+        while !self.is_enabled() {
+            guard = self.cv.wait(guard).unwrap();
+        }
+    }
+}
+
 #[tauri::command]
 fn quit_app(app: tauri::AppHandle) {
     app.exit(0);
+}
+
+#[tauri::command]
+fn set_tail_enabled(enabled: bool, gate: tauri::State<'_, Arc<TailGate>>) {
+    gate.set_enabled(enabled);
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -11,6 +53,10 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .setup(|app| {
             let window = app.get_webview_window("main").unwrap();
+
+            // Shared backend gate: when disabled, cursor polling thread blocks.
+            let gate = Arc::new(TailGate::new(true));
+            app.manage(gate.clone());
 
             #[cfg(target_os = "windows")]
             {
@@ -53,6 +99,7 @@ pub fn run() {
 
             // Spawn mouse-tracking thread — runs for the lifetime of the app
             let app_handle = app.handle().clone();
+            let gate_for_thread = gate.clone();
             std::thread::spawn(move || {
                 #[cfg(target_os = "windows")]
                 {
@@ -77,6 +124,15 @@ pub fn run() {
                     let mut vh: i32 = 1;
 
                     loop {
+                        // Hard stop: when disabled, block without polling Win32.
+                        if !gate_for_thread.is_enabled() {
+                            gate_for_thread.wait_until_enabled();
+                            // Reset so the first post-enable move emits immediately.
+                            last_pos = (-1.0f64, -1.0f64);
+                            idle_ticks = 0;
+                            screen_cache_ticks = 0;
+                        }
+
                         // Refresh screen dimensions every 600 ticks (~5s at 8ms polling)
                         if screen_cache_ticks == 0 {
                             unsafe {
@@ -123,17 +179,26 @@ pub fn run() {
             use tauri::menu::{Menu, MenuItem};
             use tauri::tray::TrayIconBuilder;
 
+            let toggle_tail_i =
+                MenuItem::with_id(app, "toggle_tail", "Toggle Tail Effect", true, None::<&str>)
+                    .unwrap();
             let settings_i =
                 MenuItem::with_id(app, "settings", "Open Settings", true, None::<&str>).unwrap();
             let quit_i =
                 MenuItem::with_id(app, "quit", "Quit Cursora", true, None::<&str>).unwrap();
-            let menu = Menu::with_items(app, &[&settings_i, &quit_i]).unwrap();
+            let menu = Menu::with_items(app, &[&toggle_tail_i, &settings_i, &quit_i]).unwrap();
 
             let _tray = TrayIconBuilder::new()
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
                 .show_menu_on_left_click(true)
                 .on_menu_event(|app, event| match event.id.as_ref() {
+                    "toggle_tail" => {
+                        // Delegate state + persistence to the frontend; it will
+                        // update config + invoke set_tail_enabled for the gate.
+                        use tauri::Emitter;
+                        let _ = app.emit("tray-toggle-tail", ());
+                    }
                     "quit" => app.exit(0),
                     "settings" => {
                         // If settings window already exists, focus it — don't open duplicates
@@ -160,7 +225,7 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![quit_app])
+        .invoke_handler(tauri::generate_handler![quit_app, set_tail_enabled])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

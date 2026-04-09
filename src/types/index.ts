@@ -9,7 +9,7 @@ export interface ThemeMeta {
   rgb: [number, number, number];
 }
 
-export const CURRENT_CONFIG_VERSION = 1;
+export const CURRENT_CONFIG_VERSION = 2;
 
 export interface TailSpecificConfig {
   themeId: ThemeId;
@@ -20,6 +20,8 @@ export interface TailSpecificConfig {
 
 export interface AppConfig {
   version: number;
+  /** Master kill-switch for the desktop overlay effect (saves CPU/GPU when off). */
+  tailEnabled: boolean;
   activeTailId: string;
   tailConfigs: Record<string, TailSpecificConfig>;
 }
@@ -31,6 +33,7 @@ export type ConfigOverrides = Partial<TailSpecificConfig>;
 export const Events = {
   CursorMove: "cursor-move",
   ConfigUpdate: "config-update",
+  TrayToggleTail: "tray-toggle-tail",
 } as const;
 
 export type EventName = (typeof Events)[keyof typeof Events];
@@ -40,6 +43,8 @@ export type EventName = (typeof Events)[keyof typeof Events];
 export type CursorMovePayload = [nx: number, ny: number];
 // - config-update: full AppConfig object
 export type ConfigUpdatePayload = AppConfig;
+// - tray-toggle-tail: no payload (request from backend tray)
+export type TrayToggleTailPayload = null;
 
 // 3. Tail Registry Types
 import type { BaseTail } from "@/features/tails/BaseTail";
