@@ -28,30 +28,16 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
-      - name: Write Tauri signing key
-        shell: pwsh
-        run: |
-          $key = "${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}"
-          if ([string]::IsNullOrWhiteSpace($key)) {
-            throw "Missing TAURI_SIGNING_PRIVATE_KEY secret."
-          }
-
-          $path = Join-Path $env:RUNNER_TEMP "tauri-signing.key"
-          Set-Content -Path $path -Value $key -Encoding utf8 -NoNewline
-
-          "TAURI_SIGNING_PRIVATE_KEY_PATH=$path" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-
       - name: Build and publish to GitHub Releases
         uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: Cursora ${{ github.ref_name }}
           releaseBody: See the assets to download and install this version.
           releaseDraft: false
           prerelease: false
-          uploadUpdaterJson: true
-          updaterJsonPreferNsis: true
-          uploadUpdaterSignatures: true
+          uploadUpdaterJson: false
+          updaterJsonPreferNsis: false
+          uploadUpdaterSignatures: false

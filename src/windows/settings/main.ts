@@ -2,7 +2,6 @@ import { configManager } from "@/shared/config";
 import { emitConfigUpdate, onConfigUpdate } from "@/shared/ipc/events";
 import { getAllTails } from "@/features/tails";
 import { ThemeRegistry } from "@/shared/config/themes";
-import { checkForUpdates } from "@/shared/updater";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { invoke } from "@tauri-apps/api/core";
 import { PreviewManager } from "./PreviewManager";
@@ -23,15 +22,15 @@ function handleTailSwitch(tailId: string) {
   configManager.setActiveTailId(tailId);
   activeTailId = tailId;
   currentTailConfig = configManager.getTailConfig(tailId);
-  
+
   previewManager.destroyAll();
   renderEffectCards();
-  
+
   void (async () => {
     await previewManager.init(document.getElementById("effect-cards")!);
     previewManager.startAll();
   })();
-  
+
   renderThemeSwatches();
   syncSliders();
   broadcastUpdate();
@@ -209,39 +208,24 @@ document.querySelectorAll<HTMLElement>(".nav-item").forEach((item) => {
 // ─── Reset ────────────────────────────────────────────────────────
 document.getElementById("reset-btn")?.addEventListener("click", () => {
   const confirmed = globalThis.confirm(
-    "Reset the settings for THIS tail to defaults? This will apply immediately."
+    "Reset the settings for THIS tail to defaults? This will apply immediately.",
   );
   if (!confirmed) return;
 
   configManager.resetTailConfig(activeTailId);
   currentTailConfig = configManager.getTailConfig(activeTailId);
-  
+
   previewManager.destroyAll();
   renderEffectCards();
   void (async () => {
     await previewManager.init(document.getElementById("effect-cards")!);
     previewManager.startAll();
   })();
-  
+
   renderThemeSwatches();
   syncSliders();
   broadcastUpdate();
 });
-
-// ─── Updates ─────────────────────────────────────────────────────
-{
-  const btn = document.getElementById("check-updates-btn") as HTMLButtonElement | null;
-  btn?.addEventListener("click", () => {
-    const prevText = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = "Checking…";
-
-    void checkForUpdates({ source: "settings", showNoUpdateDialog: true }).finally(() => {
-      btn.disabled = false;
-      btn.textContent = prevText;
-    });
-  });
-}
 
 document.getElementById("open-repo-btn")?.addEventListener("click", () => {
   void (async () => {
@@ -277,7 +261,7 @@ onConfigUpdate((config) => {
     await previewManager.init(document.getElementById("effect-cards")!);
     previewManager.startAll();
   })();
-  
+
   renderThemeSwatches();
   syncSliders();
 });

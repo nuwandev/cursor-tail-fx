@@ -1,7 +1,6 @@
 import { onCursorMove, onConfigUpdate } from "@/shared/ipc/events";
 import { loadConfig } from "@/shared/config";
 import { Renderer } from "@/features/tails/Renderer";
-import { checkForUpdates } from "@/shared/updater";
 
 async function init() {
   try {
@@ -17,9 +16,6 @@ async function init() {
     onCursorMove((nx, ny) => {
       renderer.handleMouseMove(nx, ny);
     });
-
-    void checkForUpdates({ source: "startup" });
-
   } catch (err) {
     console.error("CRITICAL OVERLAY ERROR:", err);
   }
