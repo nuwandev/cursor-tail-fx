@@ -31,15 +31,17 @@ On first launch, Cursora starts in the background and shows a **system tray** ic
 
 ## How to use
 
-- **Open Settings:** right‑click the tray icon → **Open Settings**
-- **Quit:** right‑click the tray icon → **Quit Cursora**
+- **Open tray menu:** click the tray icon (left‑click shows the menu)
+- **Open Settings:** tray menu → **Open Settings**
+- **Toggle Tail Effect:** tray menu → **Toggle Tail Effect**
+- **Quit:** tray menu → **Quit Cursora**
 
 ### Settings overview
 
-- **Effects:** choose a tail style (Comet, Orb, Sparkle, …)
+- **Effects:** enable/disable the tail effect and choose a style (Comet, Orb, Sparkle, …)
 - **Color Theme:** pick a preset theme color
 - **Engine Tuning:** adjust particle scale, trail lifespan, and opacity (changes apply instantly)
-- **Reset to Defaults:** restores the default settings
+- **Reset to Defaults:** resets the currently selected tail’s settings
 
 ## Troubleshooting
 
@@ -48,7 +50,7 @@ On first launch, Cursora starts in the background and shows a **system tray** ic
 - **High CPU/GPU usage**
   - Effects are capped to 60 fps and idle aggressively when the cursor stops. If usage is still high, try lowering **Opacity** and **Particle Scale**.
 - **Nothing shows up**
-  - Ensure WebGL 2 is available on your machine/driver.
+  - Ensure **Tail Effect** is enabled (Settings → Effects) and WebGL 2 is available on your machine/driver.
 
 ## Privacy
 

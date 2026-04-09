@@ -10,8 +10,9 @@ If you believe you have found a security issue in Cursora:
 
 - Do **not** include exploit details in a public issue.
 - Instead, either:
-  - Open a GitHub issue with minimal information and mark it clearly as a security concern, or
-  - Contact the maintainer via GitHub (user: `nuwandev`).
+  - If this repository shows a **“Report a vulnerability”** button in the GitHub **Security** tab, use that (preferred), or
+  - Contact the maintainer via GitHub (user: `nuwandev`), or
+  - As a last resort, open a GitHub issue with minimal information and mark it clearly as a security concern.
 
 Please include:
 

@@ -27,13 +27,13 @@ Tauri prerequisites: <https://tauri.app/start/prerequisites/>
 
 ```bash
 npm install
-npm run tauri -- dev
+npm run tauri dev
 ```
 
 ### Scripts
 
-- `npm run tauri -- dev` — run the full desktop app (overlay + tray + settings)
-- `npm run tauri -- build` — build and bundle installers/artifacts
+- `npm run tauri dev` — run the full desktop app (overlay + tray + settings)
+- `npm run tauri build` — build and bundle installers/artifacts
 - `npm run dev` — run the Vite dev server (frontend-only)
 - `npm run build` — typecheck + build the frontend bundle
 - `npm run preview` — preview the built frontend
@@ -41,7 +41,7 @@ npm run tauri -- dev
 ### Build
 
 ```bash
-npm run tauri -- build
+npm run tauri build
 ```
 
 Tauri bundles are produced under `src-tauri/target/release/bundle/`.
@@ -57,13 +57,18 @@ Shape (see `src/types/index.ts`):
 ```ts
 type TailSpecificConfig = {
   themeId: string;
-  sizeMultiplier: number; // clamped 0.1..5
-  lengthMultiplier: number; // clamped 0.1..5
-  opacityMultiplier: number; // clamped 0.1..5
+  // UI slider ranges (Settings):
+  // - sizeMultiplier:   0.1..3.0
+  // - lengthMultiplier: 0.1..3.0
+  // - opacityMultiplier: 0.1..1.0
+  sizeMultiplier: number;
+  lengthMultiplier: number;
+  opacityMultiplier: number;
 };
 
 type AppConfig = {
   version: number;
+  tailEnabled: boolean; // master on/off switch for the overlay effect
   activeTailId: string;
   tailConfigs: Record<string, TailSpecificConfig>; // per-tail settings
 };
@@ -76,6 +81,7 @@ Defaults and normalization live in `src/shared/config/index.ts`.
 - **Rust backend (Tauri):**
   - makes the overlay click‑through + topmost
   - polls the system cursor position and emits `cursor-move` with normalized coordinates
+  - supports a backend gate (via `set_tail_enabled`) so cursor polling can block when the effect is disabled
 - **Overlay window:** `src/windows/overlay/index.html`
   - listens for `cursor-move` and feeds it into the renderer
 - **Renderer:** `src/features/tails/Renderer.ts`
