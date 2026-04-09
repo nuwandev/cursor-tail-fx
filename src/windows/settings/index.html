@@ -275,13 +275,13 @@
               <h3>How it works</h3>
               <p class="about-text">
                 Cursora renders all effects using <strong>WebGL 2 instanced drawing</strong> — a
-                single GPU draw call renders up to 1,000 particles at 60 fps with minimal CPU
-                overhead.
+                single GPU draw call is designed to render up to 1,000 particles at a 60 fps target
+                on typical hardware, while keeping CPU overhead low.
               </p>
               <p class="about-text">
                 The Rust backend uses adaptive polling — tracking the cursor at 120 Hz when active,
-                dropping to 10 Hz during idle — so CPU usage when you're not moving the mouse is
-                effectively zero.
+                dropping to 10 Hz during idle — so CPU usage when you're not moving the mouse stays
+                very low.
               </p>
               <p class="about-text">
                 New effects can be added as a single <code>.ts</code> file and automatically appear

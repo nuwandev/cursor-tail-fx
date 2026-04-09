@@ -3,26 +3,71 @@ import { CURRENT_CONFIG_VERSION } from "@/types";
 
 export function getIdealDefault(tailId: string): TailSpecificConfig {
   const SPECIFIC_DEFAULT_CONFIGS: Record<string, Partial<TailSpecificConfig>> = {
-    "clean-minimal": { lengthMultiplier: 3, opacityMultiplier: 1, sizeMultiplier: 1.6, themeId: "cyan" },
-    "comet": { lengthMultiplier: 1, opacityMultiplier: 1, sizeMultiplier: 0.4, themeId: "cyan" },
-    "gamer-hud": { lengthMultiplier: 0.9, opacityMultiplier: 1, sizeMultiplier: 0.6, themeId: "gold" },
-    "glass-fade": { lengthMultiplier: 0.4, opacityMultiplier: 0.6, sizeMultiplier: 0.9, themeId: "white" },
-    "liquid-wave": { lengthMultiplier: 0.4, opacityMultiplier: 1, sizeMultiplier: 0.5, themeId: "blue" },
-    "magic-rune": { lengthMultiplier: 1, opacityMultiplier: 0.9, sizeMultiplier: 0.5, themeId: "neon" },
-    "neon-pulse": { lengthMultiplier: 0.3, opacityMultiplier: 0.9, sizeMultiplier: 0.4, themeId: "fire" },
-    "orb": { lengthMultiplier: 0.8, opacityMultiplier: 1, sizeMultiplier: 0.3, themeId: "minimal" },
-    "retro-pixel": { lengthMultiplier: 0.8, opacityMultiplier: 0.8, sizeMultiplier: 0.6, themeId: "green" },
-    "soft-glow": { lengthMultiplier: 0.6, opacityMultiplier: 0.5, sizeMultiplier: 0.2, themeId: "neon" },
-    "spark-burst": { lengthMultiplier: 1.2, opacityMultiplier: 1, sizeMultiplier: 1.4, themeId: "yellow" },
-    "sparkle": { lengthMultiplier: 0.2, opacityMultiplier: 1, sizeMultiplier: 0.5, themeId: "white" }
+    "clean-minimal": {
+      lengthMultiplier: 3,
+      opacityMultiplier: 1,
+      sizeMultiplier: 1.6,
+      themeId: "cyan",
+    },
+    comet: { lengthMultiplier: 1, opacityMultiplier: 1, sizeMultiplier: 0.4, themeId: "cyan" },
+    "gamer-hud": {
+      lengthMultiplier: 0.9,
+      opacityMultiplier: 1,
+      sizeMultiplier: 0.6,
+      themeId: "gold",
+    },
+    "glass-fade": {
+      lengthMultiplier: 0.4,
+      opacityMultiplier: 0.6,
+      sizeMultiplier: 0.9,
+      themeId: "white",
+    },
+    "liquid-wave": {
+      lengthMultiplier: 0.4,
+      opacityMultiplier: 1,
+      sizeMultiplier: 0.5,
+      themeId: "blue",
+    },
+    "magic-rune": {
+      lengthMultiplier: 1,
+      opacityMultiplier: 0.9,
+      sizeMultiplier: 0.5,
+      themeId: "neon",
+    },
+    "neon-pulse": {
+      lengthMultiplier: 0.3,
+      opacityMultiplier: 0.9,
+      sizeMultiplier: 0.4,
+      themeId: "fire",
+    },
+    orb: { lengthMultiplier: 0.8, opacityMultiplier: 1, sizeMultiplier: 0.3, themeId: "minimal" },
+    "retro-pixel": {
+      lengthMultiplier: 0.8,
+      opacityMultiplier: 0.8,
+      sizeMultiplier: 0.6,
+      themeId: "green",
+    },
+    "soft-glow": {
+      lengthMultiplier: 0.6,
+      opacityMultiplier: 0.5,
+      sizeMultiplier: 0.2,
+      themeId: "neon",
+    },
+    "spark-burst": {
+      lengthMultiplier: 1.2,
+      opacityMultiplier: 1,
+      sizeMultiplier: 1.4,
+      themeId: "yellow",
+    },
+    sparkle: { lengthMultiplier: 0.2, opacityMultiplier: 1, sizeMultiplier: 0.5, themeId: "white" },
   };
 
   const specific = SPECIFIC_DEFAULT_CONFIGS[tailId] || {};
   return {
     themeId: specific.themeId ?? "cyan",
-    sizeMultiplier: specific.sizeMultiplier ?? 1.0,
-    lengthMultiplier: specific.lengthMultiplier ?? 1.0,
-    opacityMultiplier: specific.opacityMultiplier ?? 1.0,
+    sizeMultiplier: specific.sizeMultiplier ?? 1,
+    lengthMultiplier: specific.lengthMultiplier ?? 1,
+    opacityMultiplier: specific.opacityMultiplier ?? 1,
   };
 }
 
@@ -42,52 +87,89 @@ class ConfigManager {
 
   public init(): void {
     if (this.initialized) return;
+
+    const raw = localStorage.getItem(CONFIG_KEY) ?? localStorage.getItem(LEGACY_CONFIG_KEY);
+    if (!raw) {
+      this.state = structuredClone(DEFAULT_APP_CONFIG);
+      this.saveNow();
+      this.initialized = true;
+      return;
+    }
+
     try {
-      const raw = localStorage.getItem(CONFIG_KEY) ?? localStorage.getItem(LEGACY_CONFIG_KEY);
-      if (!raw) throw new Error("No config");
-      
-      let parsed = JSON.parse(raw);
+      const parsed = JSON.parse(raw);
       this.state = this.migrate(parsed);
     } catch (err) {
+      console.warn("Failed to load persisted config, resetting to defaults.", err);
       this.state = structuredClone(DEFAULT_APP_CONFIG);
       this.saveNow();
     }
+
     this.initialized = true;
   }
 
   private migrate(stored: any): AppConfig {
     if (stored.version == null || stored.version < CURRENT_CONFIG_VERSION) {
-      let newState = structuredClone(DEFAULT_APP_CONFIG);
-      // Legacy global config to specific tail logic
-      if (stored.tailId) newState.activeTailId = stored.tailId;
-      
-      if (!stored.tailConfigs) stored.tailConfigs = {};
-      
-      // Map old global theme multipliers into the specific tail if it didn't have one
-      if (stored.tailId && !stored.tailConfigs[stored.tailId]) {
-        stored.tailConfigs[stored.tailId] = {
-           themeId: stored.themeId ?? getIdealDefault(stored.tailId).themeId,
-           sizeMultiplier: typeof stored.sizeMultiplier === 'number' ? stored.sizeMultiplier : getIdealDefault(stored.tailId).sizeMultiplier,
-           lengthMultiplier: typeof stored.lengthMultiplier === 'number' ? stored.lengthMultiplier : getIdealDefault(stored.tailId).lengthMultiplier,
-           opacityMultiplier: typeof stored.opacityMultiplier === 'number' ? stored.opacityMultiplier : getIdealDefault(stored.tailId).opacityMultiplier,
-        };
-      }
-      
-      // Patch any existing configs with missed variables from legacy schemas
-      for (const id in stored.tailConfigs) {
-        stored.tailConfigs[id].opacityMultiplier ??= getIdealDefault(id).opacityMultiplier;
-        stored.tailConfigs[id].sizeMultiplier ??= getIdealDefault(id).sizeMultiplier;
-        stored.tailConfigs[id].lengthMultiplier ??= getIdealDefault(id).lengthMultiplier;
-        stored.tailConfigs[id].themeId ??= getIdealDefault(id).themeId;
-      }
-      
-      newState.tailConfigs = stored.tailConfigs;
+      const newState = structuredClone(DEFAULT_APP_CONFIG);
+      this.applyLegacyState(newState, stored);
       newState.version = CURRENT_CONFIG_VERSION;
       this.state = newState;
       this.saveNow();
       return newState;
     }
+
     return stored as AppConfig;
+  }
+
+  private applyLegacyState(newState: AppConfig, stored: any): void {
+    if (stored.tailId) {
+      newState.activeTailId = stored.tailId;
+    }
+
+    const legacyTailConfigs: Record<string, Partial<TailSpecificConfig>> = stored.tailConfigs ?? {};
+
+    if (stored.tailId && !legacyTailConfigs[stored.tailId]) {
+      legacyTailConfigs[stored.tailId] = this.buildLegacyTailConfig(stored.tailId, stored);
+    }
+
+    const normalizedTailConfigs: Record<string, TailSpecificConfig> = {};
+    for (const [id, config] of Object.entries(legacyTailConfigs)) {
+      normalizedTailConfigs[id] = this.normalizeTailConfig(id, config ?? {});
+    }
+
+    newState.tailConfigs = normalizedTailConfigs;
+  }
+
+  private buildLegacyTailConfig(tailId: string, stored: any): TailSpecificConfig {
+    const defaults = getIdealDefault(tailId);
+
+    return {
+      themeId: stored.themeId ?? defaults.themeId,
+      sizeMultiplier:
+        typeof stored.sizeMultiplier === "number" ? stored.sizeMultiplier : defaults.sizeMultiplier,
+      lengthMultiplier:
+        typeof stored.lengthMultiplier === "number"
+          ? stored.lengthMultiplier
+          : defaults.lengthMultiplier,
+      opacityMultiplier:
+        typeof stored.opacityMultiplier === "number"
+          ? stored.opacityMultiplier
+          : defaults.opacityMultiplier,
+    };
+  }
+
+  private normalizeTailConfig(
+    tailId: string,
+    config: Partial<TailSpecificConfig>,
+  ): TailSpecificConfig {
+    const defaults = getIdealDefault(tailId);
+
+    return {
+      themeId: config.themeId ?? defaults.themeId,
+      sizeMultiplier: config.sizeMultiplier ?? defaults.sizeMultiplier,
+      lengthMultiplier: config.lengthMultiplier ?? defaults.lengthMultiplier,
+      opacityMultiplier: config.opacityMultiplier ?? defaults.opacityMultiplier,
+    };
   }
 
   public getState(): AppConfig {
@@ -112,22 +194,22 @@ class ConfigManager {
     }
     this.state.tailConfigs[tailId] = {
       ...this.state.tailConfigs[tailId],
-      ...updates
+      ...updates,
     };
-    
+
     // Clamp values securely
     const c = this.state.tailConfigs[tailId];
-    c.sizeMultiplier = Math.max(0.1, Math.min(5.0, c.sizeMultiplier));
-    c.lengthMultiplier = Math.max(0.1, Math.min(5.0, c.lengthMultiplier));
-    c.opacityMultiplier = Math.max(0.1, Math.min(5.0, c.opacityMultiplier));
-    
+    c.sizeMultiplier = Math.max(0.1, Math.min(5, c.sizeMultiplier));
+    c.lengthMultiplier = Math.max(0.1, Math.min(5, c.lengthMultiplier));
+    c.opacityMultiplier = Math.max(0.1, Math.min(5, c.opacityMultiplier));
+
     this.save();
   }
 
   public setActiveTailId(tailId: string): void {
-     if (!this.initialized) this.init();
-     this.state.activeTailId = tailId;
-     this.save();
+    if (!this.initialized) this.init();
+    this.state.activeTailId = tailId;
+    this.save();
   }
 
   public resetTailConfig(tailId: string): void {
@@ -141,7 +223,7 @@ class ConfigManager {
     this.state = structuredClone(DEFAULT_APP_CONFIG);
     this.saveNow();
   }
-  
+
   public applyExternalConfig(config: AppConfig): void {
     if (!this.initialized) this.init();
     this.state = structuredClone(config);
