@@ -5,7 +5,9 @@ import vert from "./shaders/glass-fade.vert.glsl?raw";
 import frag from "./shaders/glass-fade.frag.glsl?raw";
 
 export class GlassFadeTail extends BaseTail {
-  public getShaders() { return { vertex: vert, fragment: frag }; }
+  public getShaders() {
+    return { vertex: vert, fragment: frag };
+  }
   public updateEffect(_dt: number): void {
     // specific per-frame logic (if any)
   }

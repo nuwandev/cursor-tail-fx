@@ -102,7 +102,7 @@ This repo is set up so new effects are easy: add a `*Tail.ts` file + shaders, re
 1. Copy one of the existing tails (e.g. `CometTail.ts`) and rename it.
 2. Copy the matching shaders and tweak the visuals.
 3. Update the `registerTail({ id, name, description, class })` metadata.
-4. Run `npm run tauri -- dev` → open Settings → your effect should be listed under **Effects**.
+4. Run `npm run tauri dev` → open Settings → your effect should be listed under **Effects**.
 
 ### 1) Create a new `*Tail.ts` file
 
@@ -206,6 +206,8 @@ npx prettier -w .
 
 npx eslint .
 ```
+
+Note: Prettier respects `.prettierignore` in the repo root, so `npx prettier -w .` will not format generated/build folders like `src-tauri/target/`.
 
 ## Pull requests
 

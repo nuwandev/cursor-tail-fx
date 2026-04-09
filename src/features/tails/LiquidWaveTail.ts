@@ -5,7 +5,9 @@ import vert from "./shaders/liquid-wave.vert.glsl?raw";
 import frag from "./shaders/liquid-wave.frag.glsl?raw";
 
 export class LiquidWaveTail extends BaseTail {
-  public getShaders() { return { vertex: vert, fragment: frag }; }
+  public getShaders() {
+    return { vertex: vert, fragment: frag };
+  }
   public updateEffect(_dt: number): void {}
 }
 
