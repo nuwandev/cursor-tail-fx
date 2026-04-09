@@ -6,7 +6,6 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { invoke } from "@tauri-apps/api/core";
 import { PreviewManager } from "./PreviewManager";
 
-// Keep a local cached view of the current tail config being edited safely cloned from state manager
 let activeTailId = configManager.getState().activeTailId;
 let currentTailConfig = configManager.getTailConfig(activeTailId);
 
@@ -167,7 +166,7 @@ function syncSliders() {
 }
 
 sizeSlider.addEventListener("input", (e) => {
-  const val = parseFloat((e.target as HTMLInputElement).value);
+  const val = Number.parseFloat((e.target as HTMLInputElement).value);
   configManager.updateTailConfig(activeTailId, { sizeMultiplier: val });
   currentTailConfig = configManager.getTailConfig(activeTailId);
   updateLabels();
@@ -176,7 +175,7 @@ sizeSlider.addEventListener("input", (e) => {
 sizeSlider.addEventListener("change", () => broadcastUpdate());
 
 lengthSlider.addEventListener("input", (e) => {
-  const val = parseFloat((e.target as HTMLInputElement).value);
+  const val = Number.parseFloat((e.target as HTMLInputElement).value);
   configManager.updateTailConfig(activeTailId, { lengthMultiplier: val });
   currentTailConfig = configManager.getTailConfig(activeTailId);
   updateLabels();
@@ -185,7 +184,7 @@ lengthSlider.addEventListener("input", (e) => {
 lengthSlider.addEventListener("change", () => broadcastUpdate());
 
 opacitySlider.addEventListener("input", (e) => {
-  const val = parseFloat((e.target as HTMLInputElement).value);
+  const val = Number.parseFloat((e.target as HTMLInputElement).value);
   configManager.updateTailConfig(activeTailId, { opacityMultiplier: val });
   currentTailConfig = configManager.getTailConfig(activeTailId);
   updateLabels();

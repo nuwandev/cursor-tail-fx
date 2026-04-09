@@ -27,13 +27,17 @@ export class Renderer {
       TailClass = getTailSafe("comet");
       safeTailId = "comet";
     }
-    
-    // Extract specific config natively
+
     let tailConfig = this.config.tailConfigs[safeTailId];
     if (!tailConfig) {
-      tailConfig = { themeId: "cyan", sizeMultiplier: 1.0, lengthMultiplier: 1.0, opacityMultiplier: 1.0 };
+      tailConfig = {
+        themeId: "cyan",
+        sizeMultiplier: 1,
+        lengthMultiplier: 1,
+        opacityMultiplier: 1,
+      };
     }
-    
+
     try {
       this.tail = new TailClass(this.canvas, tailConfig);
     } catch (e) {
@@ -42,8 +46,8 @@ export class Renderer {
       TailClass = getTailSafe("comet");
       this.tail = new TailClass(this.canvas, tailConfig);
     }
-    this.tail!.updateConfig(tailConfig);
-    this.engine = new TailEngine(this.tail!);
+    this.tail.updateConfig(tailConfig);
+    this.engine = new TailEngine(this.tail);
   }
 
   handleMouseMove(nx: number, ny: number) {
@@ -54,15 +58,15 @@ export class Renderer {
   }
 
   handleConfigUpdate(newConfig: AppConfig) {
-    if (newConfig.activeTailId !== this.config.activeTailId) {
-      this.config = newConfig;
-      this.initTail(newConfig.activeTailId);
-    } else {
+    if (newConfig.activeTailId === this.config.activeTailId) {
       this.config = newConfig;
       const tailConfig = newConfig.tailConfigs[newConfig.activeTailId];
       if (tailConfig) {
-         this.engine?.updateConfig(tailConfig);
+        this.engine?.updateConfig(tailConfig);
       }
+    } else {
+      this.config = newConfig;
+      this.initTail(newConfig.activeTailId);
     }
   }
 

@@ -6,7 +6,9 @@ import frag from "./shaders/retro-pixel.frag.glsl?raw";
 
 export class RetroPixelTail extends BaseTail {
   public getShaders() { return { vertex: vert, fragment: frag }; }
-  public updateEffect(_dt: number): void {}
+  public updateEffect(_dt: number): void {
+    //specific per-frame logic (if any)
+  }
 }
 
 registerTail({

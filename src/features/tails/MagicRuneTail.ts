@@ -5,8 +5,12 @@ import vert from "./shaders/magic-rune.vert.glsl?raw";
 import frag from "./shaders/magic-rune.frag.glsl?raw";
 
 export class MagicRuneTail extends BaseTail {
-  public getShaders() { return { vertex: vert, fragment: frag }; }
-  public updateEffect(_dt: number): void {}
+  public getShaders() {
+    return { vertex: vert, fragment: frag };
+  }
+  public updateEffect(_dt: number): void {
+    // specific per-frame logic (if any)
+  }
 }
 
 registerTail({
