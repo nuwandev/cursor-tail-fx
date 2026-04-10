@@ -49,8 +49,32 @@ fn set_tail_enabled(enabled: bool, gate: tauri::State<'_, Arc<TailGate>>) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    fn show_settings_window(app: &tauri::AppHandle) {
+        if let Some(win) = app.get_webview_window("settings") {
+            let _ = win.show();
+            let _ = win.set_focus();
+            return;
+        }
+
+        let _ = tauri::WebviewWindowBuilder::new(
+            app,
+            "settings",
+            tauri::WebviewUrl::App("src/windows/settings/index.html".into()),
+        )
+        .title("Cursora — Settings")
+        .inner_size(860.0, 620.0)
+        .min_inner_size(700.0, 520.0)
+        .resizable(true)
+        .build();
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        // Prevent multiple running processes (e.g. launching again from Start Menu).
+        // Subsequent launches will activate the existing instance instead.
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            show_settings_window(app);
+        }))
         .setup(|app| {
             let window = app.get_webview_window("main").unwrap();
 
@@ -201,22 +225,7 @@ pub fn run() {
                     }
                     "quit" => app.exit(0),
                     "settings" => {
-                        // If settings window already exists, focus it — don't open duplicates
-                        if let Some(win) = app.get_webview_window("settings") {
-                            let _ = win.show();
-                            let _ = win.set_focus();
-                        } else {
-                            let _ = tauri::WebviewWindowBuilder::new(
-                                app,
-                                "settings",
-                                tauri::WebviewUrl::App("src/windows/settings/index.html".into()),
-                            )
-                            .title("Cursora — Settings")
-                            .inner_size(860.0, 620.0)
-                            .min_inner_size(700.0, 520.0)
-                            .resizable(true)
-                            .build();
-                        }
+                        show_settings_window(app);
                     }
                     _ => {}
                 })
