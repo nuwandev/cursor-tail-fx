@@ -42,8 +42,21 @@ function stopOverlayRendering(): void {
 function startOverlayRendering(): void {
   if (!canvasEl) return;
   if (renderer) return;
+  // Ensure the config we pass to the renderer includes a fully
+  // hydrated tail config for the currently active tail. On a true
+  // first run, tailConfigs will be empty until something (usually
+  // the Settings window) calls getTailConfig at least once.
+  const initial = configManager.getState();
+  const activeTailId = initial.activeTailId;
+
+  // This call creates and persists the ideal default TailSpecificConfig
+  // for the active tail if it doesn't exist yet.
+  configManager.getTailConfig(activeTailId);
+
+  const hydratedConfig = configManager.getState();
+
   canvasEl.style.display = "block";
-  renderer = new Renderer(canvasEl, configManager.getState());
+  renderer = new Renderer(canvasEl, hydratedConfig);
 }
 
 async function init() {
