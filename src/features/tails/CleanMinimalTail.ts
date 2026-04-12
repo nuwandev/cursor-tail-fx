@@ -21,5 +21,6 @@ registerTail({
   id: "clean-minimal",
   name: "Clean Minimal",
   description: "A calm, precise, unobtrusive elegant trace.",
+  creator: { name: "nuwandev" },
   class: CleanMinimalTail,
 });

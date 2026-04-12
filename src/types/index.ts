@@ -51,9 +51,15 @@ import type { BaseTail } from "@/features/tails/BaseTail";
 
 export type TailClass = new (canvas: HTMLCanvasElement, config: TailSpecificConfig) => BaseTail;
 
+export interface TailCreator {
+  name: string;
+  url?: string;
+}
+
 export interface TailMeta {
   id: string;
   name: string;
   description: string;
   class: TailClass;
+  creator: TailCreator;
 }

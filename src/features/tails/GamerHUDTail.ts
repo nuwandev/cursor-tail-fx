@@ -17,5 +17,6 @@ registerTail({
   id: "gamer-hud",
   name: "Gamer HUD",
   description: "Sharp, angular digital brackets snapping physically over time.",
+  creator: { name: "nuwandev" },
   class: GamerHUDTail,
 });

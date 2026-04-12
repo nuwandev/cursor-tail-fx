@@ -15,5 +15,6 @@ registerTail({
   id: "liquid-wave",
   name: "Liquid Wave",
   description: "A continuous flowing, undulating ribbon of fluid motion.",
+  creator: { name: "nuwandev" },
   class: LiquidWaveTail,
 });

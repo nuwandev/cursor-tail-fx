@@ -17,5 +17,6 @@ registerTail({
   id: "retro-pixel",
   name: "Retro Pixel",
   description: "8-bit quantization with grid-aligned rigid snapping.",
+  creator: { name: "nuwandev" },
   class: RetroPixelTail,
 });

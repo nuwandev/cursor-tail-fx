@@ -17,5 +17,6 @@ registerTail({
   id: "soft-glow",
   name: "Soft Glow",
   description: "A warm, gentle diffusion trail with slow expansion.",
+  creator: { name: "nuwandev" },
   class: SoftGlowTail,
 });

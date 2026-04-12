@@ -99,11 +99,38 @@ function renderEffectCards() {
     title.className = "card-title";
     title.textContent = tail.name;
 
+    const creatorLine = document.createElement("span");
+    creatorLine.className = "card-creator";
+    creatorLine.append("by ");
+
+    const creatorName = tail.creator?.name?.trim() || "Unknown";
+    const creatorUrl = tail.creator?.url?.trim();
+    if (creatorUrl) {
+      const link = document.createElement("a");
+      link.href = creatorUrl;
+      link.textContent = creatorName;
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        void (async () => {
+          try {
+            await openUrl(creatorUrl);
+          } catch (err) {
+            console.error("Failed to open creator link:", err);
+          }
+        })();
+      });
+      creatorLine.appendChild(link);
+    } else {
+      creatorLine.append(creatorName);
+    }
+
     const desc = document.createElement("span");
     desc.className = "card-desc";
     desc.textContent = tail.description;
 
     info.appendChild(title);
+    info.appendChild(creatorLine);
     info.appendChild(desc);
     cardContent.appendChild(canvas);
     cardContent.appendChild(info);

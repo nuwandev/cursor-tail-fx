@@ -17,5 +17,6 @@ registerTail({
   id: "magic-rune",
   name: "Magic Rune",
   description: "Mystical swirling symbols orbiting in space.",
+  creator: { name: "nuwandev" },
   class: MagicRuneTail,
 });

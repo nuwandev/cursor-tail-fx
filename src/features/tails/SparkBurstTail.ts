@@ -21,5 +21,6 @@ registerTail({
   id: "spark-burst",
   name: "Spark Burst",
   description: "Snappy, celebratory, high-energy tiny sparkles.",
+  creator: { name: "nuwandev" },
   class: SparkBurstTail,
 });

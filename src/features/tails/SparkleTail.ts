@@ -21,5 +21,6 @@ registerTail({
   id: "sparkle",
   name: "Sparkle",
   description: "Sparkly particle effect",
+  creator: { name: "nuwandev" },
   class: SparkleTail,
 });

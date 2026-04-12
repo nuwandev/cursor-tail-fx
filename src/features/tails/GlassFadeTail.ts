@@ -17,5 +17,6 @@ registerTail({
   id: "glass-fade",
   name: "Glass Fade",
   description: "Ultra subtle transparent rim effect simulating a hollow tube.",
+  creator: { name: "nuwandev" },
   class: GlassFadeTail,
 });

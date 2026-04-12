@@ -21,5 +21,6 @@ registerTail({
   id: "aurora",
   name: "Aurora Borealis",
   description: "A shimmering, colour-cycling curtain of light inspired by the northern lights",
+  creator: { name: "nuwandev" },
   class: AuroraTail,
 });

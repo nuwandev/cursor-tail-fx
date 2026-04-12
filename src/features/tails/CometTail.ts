@@ -21,5 +21,6 @@ registerTail({
   id: "comet",
   name: "Comet",
   description: "A comet-like trail",
+  creator: { name: "nuwandev" },
   class: CometTail,
 });

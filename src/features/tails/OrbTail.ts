@@ -21,5 +21,6 @@ registerTail({
   id: "orb",
   name: "Orb",
   description: "Floating orb effect",
+  creator: { name: "nuwandev" },
   class: OrbTail,
 });

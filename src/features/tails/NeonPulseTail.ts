@@ -21,5 +21,6 @@ registerTail({
   id: "neon-pulse",
   name: "Neon Pulse",
   description: "An energetic, futuristic, pulsing neon trail.",
+  creator: { name: "nuwandev" },
   class: NeonPulseTail,
 });

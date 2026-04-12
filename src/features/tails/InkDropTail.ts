@@ -21,5 +21,6 @@ registerTail({
   id: "ink-drop",
   name: "Ink Drop",
   description: "Blooming ink drops that bleed outward and dilute to white as they age",
+  creator: { name: "nuwandev" },
   class: InkDropTail,
 });

@@ -373,6 +373,21 @@ body {
   line-height: 1.4;
 }
 
+.card-creator {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.2;
+}
+
+.card-creator a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.card-creator a:hover {
+  text-decoration: underline;
+}
+
 /* ─── Theme Swatches ─────────────────────────────────────────────── */
 .theme-swatches {
   display: flex;
