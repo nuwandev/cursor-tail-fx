@@ -3,6 +3,7 @@ use tauri::Manager;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Condvar, Mutex};
 
+/// Shared backend gate for enabling/disabling the cursor polling thread.
 struct TailGate {
     enabled: AtomicBool,
     wait_lock: Mutex<()>,
@@ -10,6 +11,7 @@ struct TailGate {
 }
 
 impl TailGate {
+    /// Create a new TailGate, initially enabled or disabled.
     fn new(enabled: bool) -> Self {
         Self {
             enabled: AtomicBool::new(enabled),
@@ -18,6 +20,7 @@ impl TailGate {
         }
     }
 
+    /// Enable or disable the gate. Wakes any waiting threads if enabled.
     fn set_enabled(&self, enabled: bool) {
         self.enabled.store(enabled, Ordering::Relaxed);
         if enabled {
@@ -25,10 +28,12 @@ impl TailGate {
         }
     }
 
+    /// Returns true if the gate is enabled.
     fn is_enabled(&self) -> bool {
         self.enabled.load(Ordering::Relaxed)
     }
 
+    /// Block the calling thread until the gate is enabled.
     fn wait_until_enabled(&self) {
         let mut guard = self.wait_lock.lock().unwrap();
         while !self.is_enabled() {
@@ -37,11 +42,13 @@ impl TailGate {
     }
 }
 
+/// Quits the application.
 #[tauri::command]
 fn quit_app(app: tauri::AppHandle) {
     app.exit(0);
 }
 
+/// Enables or disables the tail effect (gates the polling thread).
 #[tauri::command]
 fn set_tail_enabled(enabled: bool, gate: tauri::State<'_, Arc<TailGate>>) {
     gate.set_enabled(enabled);
@@ -70,15 +77,14 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        // Prevent multiple running processes (e.g. launching again from Start Menu).
-        // Subsequent launches will activate the existing instance instead.
+        // Enforce single-instance: subsequent launches activate the existing instance.
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
             show_settings_window(app);
         }))
         .setup(|app| {
             let window = app.get_webview_window("main").unwrap();
 
-            // Shared backend gate: when disabled, cursor polling thread blocks.
+            // Shared backend gate: disables polling thread when effect is off.
             let gate = Arc::new(TailGate::new(true));
             app.manage(gate.clone());
 
@@ -94,7 +100,7 @@ pub fn run() {
 
                 let hwnd: HWND = HWND(window.hwnd().unwrap().0 as _);
                 unsafe {
-                    // Make the overlay window click-through and layered (transparent)
+                    // Make overlay window click-through and layered (transparent)
                     let ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE);
                     SetWindowLongW(
                         hwnd,
@@ -102,7 +108,7 @@ pub fn run() {
                         ex_style | (WS_EX_LAYERED.0 as i32) | (WS_EX_TRANSPARENT.0 as i32),
                     );
 
-                    // Stretch overlay to cover all monitors in a multi-monitor setup
+                    // Stretch overlay to cover all monitors (multi-monitor setups)
                     let x = GetSystemMetrics(SM_XVIRTUALSCREEN);
                     let y = GetSystemMetrics(SM_YVIRTUALSCREEN);
                     let cx = GetSystemMetrics(SM_CXVIRTUALSCREEN);
@@ -121,7 +127,7 @@ pub fn run() {
                 }
             }
 
-            // Spawn mouse-tracking thread — runs for the lifetime of the app
+            // Mouse-tracking thread: emits normalized cursor position for overlay
             let app_handle = app.handle().clone();
             let gate_for_thread = gate.clone();
             std::thread::spawn(move || {
@@ -138,9 +144,7 @@ pub fn run() {
                     let mut last_pos = (-1.0f64, -1.0f64);
                     let mut idle_ticks: u32 = 0;
 
-                    // Cache virtual screen dimensions — these only change on monitor
-                    // connect/disconnect, not every frame. We refresh every ~5s to catch
-                    // any runtime monitor changes without hammering the Win32 API.
+                    // Cache virtual screen dimensions; refresh every ~5s to catch monitor changes.
                     let mut screen_cache_ticks: u32 = 0;
                     let mut vx: i32 = 0;
                     let mut vy: i32 = 0;
@@ -148,7 +152,7 @@ pub fn run() {
                     let mut vh: i32 = 1;
 
                     loop {
-                        // Hard stop: when disabled, block without polling Win32.
+                        // Block polling when disabled (saves CPU, avoids Win32 calls).
                         if !gate_for_thread.is_enabled() {
                             gate_for_thread.wait_until_enabled();
                             // Reset so the first post-enable move emits immediately.
@@ -187,9 +191,7 @@ pub fn run() {
                             }
                         }
 
-                        // Adaptive polling:
-                        //   Active  (idle < 100 ticks) → poll at ~120 Hz (8ms)
-                        //   Idle    (idle ≥ 100 ticks) → drop to  ~10 Hz (100ms) to save CPU
+                        // Adaptive polling: fast when active, slow when idle to save CPU
                         if idle_ticks >= 100 {
                             std::thread::sleep(Duration::from_millis(100));
                         } else {
@@ -199,7 +201,6 @@ pub fn run() {
                 }
             });
 
-            // System tray: Settings and Quit menu items
             use tauri::menu::{Menu, MenuItem};
             use tauri::tray::TrayIconBuilder;
 
@@ -218,8 +219,7 @@ pub fn run() {
                 .show_menu_on_left_click(true)
                 .on_menu_event(|app, event| match event.id.as_ref() {
                     "toggle_tail" => {
-                        // Delegate state + persistence to the frontend; it will
-                        // update config + invoke set_tail_enabled for the gate.
+                        // State and persistence are handled in the frontend; this just emits the event.
                         use tauri::Emitter;
                         let _ = app.emit("tray-toggle-tail", ());
                     }
