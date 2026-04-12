@@ -128,8 +128,10 @@ class ConfigManager {
       return newState;
     }
 
-    // Stored config is already at the current version; still normalize any
-    // missing fields defensively (e.g. older builds that wrote partial config).
+    /*
+     * Stored config is already at the current version, but older builds may have
+     * persisted partial objects. Normalize missing fields defensively.
+     */
     const normalized = legacy as AppConfig;
     if (typeof (normalized as any).tailEnabled !== "boolean") {
       (normalized as any).tailEnabled = true;
@@ -157,12 +159,12 @@ class ConfigManager {
       opacityMultiplier?: number;
     },
   ): void {
-    // If a legacy build happened to store this flag, keep it. Otherwise default.
+    /* Preserve the persisted kill-switch if present; otherwise default. */
     if (typeof (stored as any).tailEnabled === "boolean") {
       newState.tailEnabled = (stored as any).tailEnabled as boolean;
     }
 
-    // v1+ uses activeTailId; very old builds used tailId
+    /* v1+ uses `activeTailId`; very old builds used `tailId`. */
     if (typeof stored.activeTailId === "string" && stored.activeTailId.length > 0) {
       newState.activeTailId = stored.activeTailId;
     } else if (stored.tailId) {
@@ -228,13 +230,18 @@ class ConfigManager {
     return structuredClone(this.state);
   }
 
+  /**
+   * Returns a clone of the current tail config.
+   *
+   * If the tail is missing a persisted config entry, one is created immediately
+   * and persisted to keep the store self-healing.
+   */
   public getTailConfig(tailId: string): TailSpecificConfig {
     if (!this.initialized) this.init();
     if (!this.state.tailConfigs[tailId]) {
       this.state.tailConfigs[tailId] = getIdealDefault(tailId);
-      this.saveNow(); // persist missing immediately
+      this.saveNow();
     }
-    // Return deep clone to ensure pure immutability on UI side
     return structuredClone(this.state.tailConfigs[tailId]);
   }
 
@@ -248,7 +255,7 @@ class ConfigManager {
       ...updates,
     };
 
-    // Clamp values securely
+    /* Enforce sane ranges so invalid values never get persisted. */
     const c = this.state.tailConfigs[tailId];
     c.sizeMultiplier = Math.max(0.1, Math.min(5, c.sizeMultiplier));
     c.lengthMultiplier = Math.max(0.1, Math.min(5, c.lengthMultiplier));
@@ -303,10 +310,9 @@ class ConfigManager {
 }
 
 export const configManager = new ConfigManager();
-// ensure initialized automatically
 configManager.init();
 
-// Export legacy loader mapping for any lingering code pieces safely
+/** Back-compat export for older callsites that expect `loadConfig()`. */
 export function loadConfig(): AppConfig {
   return configManager.getState();
 }

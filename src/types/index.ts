@@ -1,12 +1,14 @@
-// Centralized generic types for Cursora
-
-// 1. Config Types
+/**
+ * Shared TypeScript types used across the settings UI, overlay renderer, and IPC layer.
+ */
 
 export interface ThemeMeta {
   id: string;
   name: string;
   rgb: [number, number, number];
 }
+
+export type ThemeId = ThemeMeta["id"];
 
 export const CURRENT_CONFIG_VERSION = 2;
 
@@ -25,10 +27,9 @@ export interface AppConfig {
   tailConfigs: Record<string, TailSpecificConfig>;
 }
 
-// Support backwards compatibility typing if any files expect it directly
+/** Back-compat alias kept for older callsites; prefer `TailSpecificConfig` for new code. */
 export type ConfigOverrides = Partial<TailSpecificConfig>;
 
-// 2. Event Types
 export const Events = {
   CursorMove: "cursor-move",
   ConfigUpdate: "config-update",
@@ -37,14 +38,16 @@ export const Events = {
 
 export type EventName = (typeof Events)[keyof typeof Events];
 
-// Runtime payloads (must match what Rust/JS actually emit)
-// - cursor-move: (nx, ny) normalized to [0..1]
+/**
+ * IPC payloads.
+ *
+ * These shapes must match what the backend (Rust) and frontend emit/expect at runtime.
+ */
+/** Cursor position normalized to $[0, 1]$ in overlay coordinates. */
 export type CursorMovePayload = [nx: number, ny: number];
-// - config-update: full AppConfig object
+/** Full config snapshot. */
 export type ConfigUpdatePayload = AppConfig;
-// - tray-toggle-tail: no payload (request from backend tray)
 
-// 3. Tail Registry Types
 import type { BaseTail } from "@/features/tails/BaseTail";
 
 export type TailClass = new (canvas: HTMLCanvasElement, config: TailSpecificConfig) => BaseTail;

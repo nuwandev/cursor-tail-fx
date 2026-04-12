@@ -12,9 +12,7 @@ export class AuroraTail extends BaseTail {
     };
   }
 
-  public updateEffect(_dt: number): void {
-    // AuroraTail — all animation is driven by GPU-side per-particle time maths
-  }
+  public updateEffect(_dt: number): void {}
 }
 
 registerTail({

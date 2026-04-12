@@ -12,9 +12,7 @@ export class InkDropTail extends BaseTail {
     };
   }
 
-  public updateEffect(_dt: number): void {
-    // InkDropTail — fully GPU-driven, no per-frame CPU logic needed
-  }
+  public updateEffect(_dt: number): void {}
 }
 
 registerTail({

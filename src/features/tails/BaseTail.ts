@@ -1,24 +1,23 @@
 import { TailSpecificConfig } from "@/types";
 import { getThemeById } from "@/shared/config/themes";
 
-// Reduced from 2000 → 1000: still plenty for smooth trails, halves GPU buffer size
+/**
+ * Rendering defaults are tuned for a lightweight desktop overlay:
+ * keep GPU memory bounded, avoid excessive particle density, and cap work to ~60fps.
+ */
 export const MAX_PARTICLES = 1000;
 export const FLOATS_PER_INSTANCE = 9; // x, y, vx, vy, spawnTime, lifeTime, r, g, b
 
-// Cap devicePixelRatio at 1.5 — saves ~56% GPU pixels on HiDPI with no visible difference
+const BASE_PARTICLE_LIFETIME_MS = 800;
+
 const MAX_DPR = 1.5;
 
-// Hard cap on canvas pixel dimensions — prevents enormous framebuffers on
-// multi-monitor or 4K setups. 1920×1080 is plenty for a glow/trail effect.
 const MAX_CANVAS_PX = 1920;
 
-// Target 60fps — trail effects gain nothing from higher refresh rates
 const TARGET_FRAME_MS = 1000 / 60;
 
-// Stop rendering 1.5s after last particle (was 3s — trail is fully faded by then)
 const IDLE_TIMEOUT_MS = 1500;
 
-// Resize debounce — prevents GPU viewport resets on every px during window snap
 const RESIZE_DEBOUNCE_MS = 50;
 
 export abstract class BaseTail {
@@ -26,26 +25,22 @@ export abstract class BaseTail {
   protected program: WebGLProgram;
   protected canvas: HTMLCanvasElement;
 
-  // Keep a stable reference so removeEventListener works (no leaks on tail switch)
+  /** Stable reference so `removeEventListener` works on tail switch. */
   private readonly boundResize = this.onResize.bind(this);
 
   protected instanceBuffer: WebGLBuffer;
   protected instanceData: Float32Array;
   protected headIndex: number = 0;
 
-  // Track the highest written slot so we only draw live particles
   private activeParticleCount: number = 0;
 
   protected isRendering: boolean = false;
   protected lastParticleTime: number = 0;
 
-  // Cached last render timestamp for FPS cap
   private lastFrameTime: number = 0;
 
-  // Cached theme color — updated once on config change, not per particle spawn
   private cachedColor: [number, number, number] = [0, 0.8, 1];
 
-  // Debounce handle for resize
   private resizeTimer: ReturnType<typeof setTimeout> | null = null;
 
   protected config: TailSpecificConfig;
@@ -71,17 +66,17 @@ export abstract class BaseTail {
       antialias: false,
       depth: false,
       preserveDrawingBuffer: false,
-      // Prefer integrated GPU — saves discrete GPU usage for a simple glow effect.
-      // On laptops/desktops with both iGPU and dGPU this can cut GPU% in half.
+      /*
+       * Prefer the integrated GPU and decouple canvas updates from vsync to reduce
+       * compositor overhead for an always-on overlay effect.
+       */
       powerPreference: "low-power",
-      // Decouple canvas updates from display vsync — reduces compositor overhead.
       desynchronized: true,
     }) as WebGL2RenderingContext;
 
     if (!gl) throw new Error("WebGL2 not supported");
     this.gl = gl;
 
-    // Cache theme color from the initial config
     this.cacheThemeColor();
 
     window.addEventListener("resize", this.boundResize);
@@ -97,7 +92,7 @@ export abstract class BaseTail {
     if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
       console.error(gl.getProgramInfoLog(this.program));
     }
-    // Cleanup intermediate shader objects after linking
+    /* Shaders can be deleted after linking; the program keeps the compiled result. */
     gl.deleteShader(vs);
     gl.deleteShader(fs);
 
@@ -105,11 +100,10 @@ export abstract class BaseTail {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
 
-    // VAO isolates attribute state — required for correct multi-tail switching
+    /* Isolate attribute state so switching tails doesn't leak bindings. */
     this.vao = gl.createVertexArray()!;
     gl.bindVertexArray(this.vao);
 
-    // Quad geometry (two triangles forming a billboard square)
     this.quadBuffer = gl.createBuffer()!;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.quadBuffer);
     gl.bufferData(
@@ -122,9 +116,9 @@ export abstract class BaseTail {
     gl.enableVertexAttribArray(a_quadPos);
     gl.vertexAttribPointer(a_quadPos, 2, gl.FLOAT, false, 0, 0);
 
-    // Per-instance particle buffer — pre-allocate full size, upload subranges
+    /* Per-instance particle buffer; layout matches `FLOATS_PER_INSTANCE`. */
     this.instanceData = new Float32Array(MAX_PARTICLES * FLOATS_PER_INSTANCE);
-    // Initialize all slots as dead (spawnTime = far past, lifeTime = 1ms)
+    /* Initialize all slots as dead (spawnTime far past, lifeTime minimal). */
     for (let i = 0; i < MAX_PARTICLES; i++) {
       this.instanceData[i * FLOATS_PER_INSTANCE + 4] = -99999;
       this.instanceData[i * FLOATS_PER_INSTANCE + 5] = 1;
@@ -173,11 +167,9 @@ export abstract class BaseTail {
    */
   public abstract updateEffect(dt: number): void;
 
-  // Optionally overridden in subclasses
   protected setupCustomUniforms(): void {
     /* intentionally empty */
   }
-  // Optionally overridden in subclasses
   protected applyCustomUniforms(_time: number): void {
     /* intentionally empty */
   }
@@ -198,14 +190,14 @@ export abstract class BaseTail {
   }
 
   private applyResize(): void {
-    // Cap DPR and apply a hard pixel cap to prevent massive framebuffers.
-    // On a 3-monitor 4K setup the virtual canvas could be 11520×2160 = ~94MB
-    // of GPU memory just for one framebuffer — completely unnecessary for trails.
+    /*
+     * Cap DPR and apply a hard pixel cap to avoid massive framebuffers on
+     * multi-monitor / HiDPI setups.
+     */
     const dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
     const rawW = Math.floor(window.innerWidth * dpr);
     const rawH = Math.floor(window.innerHeight * dpr);
 
-    // Scale down proportionally if either dimension exceeds the cap
     const scale = Math.min(1, MAX_CANVAS_PX / Math.max(rawW, rawH));
     const displayWidth = Math.floor(rawW * scale);
     const displayHeight = Math.floor(rawH * scale);
@@ -231,7 +223,6 @@ export abstract class BaseTail {
 
   public updateConfig(config: TailSpecificConfig): void {
     this.config = config;
-    // Re-cache the theme color so subsequent particles use the new color immediately
     this.cacheThemeColor();
   }
 
@@ -246,13 +237,12 @@ export abstract class BaseTail {
     this.instanceData[idx + 2] = vx;
     this.instanceData[idx + 3] = vy;
     this.instanceData[idx + 4] = t;
-    this.instanceData[idx + 5] = 800; // Base lifetime (ms)
+    this.instanceData[idx + 5] = BASE_PARTICLE_LIFETIME_MS;
     this.instanceData[idx + 6] = this.cachedColor[0];
     this.instanceData[idx + 7] = this.cachedColor[1];
     this.instanceData[idx + 8] = this.cachedColor[2];
 
     this.headIndex = (this.headIndex + 1) % MAX_PARTICLES;
-    // Track the highest contiguous slot written so draw call is always tight
     if (this.activeParticleCount < MAX_PARTICLES) {
       this.activeParticleCount++;
     }
@@ -265,15 +255,13 @@ export abstract class BaseTail {
   public flushParticles(t: number): void {
     this.lastParticleTime = t;
 
-    // Upload the full instance buffer in one call (driver batches this efficiently)
     const gl = this.gl;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.instanceBuffer);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, this.instanceData);
 
-    // Wake up the render loop if it was sleeping
     if (!this.isRendering) {
       this.isRendering = true;
-      this.lastFrameTime = 0; // Reset so first frame draws immediately
+      this.lastFrameTime = 0;
       requestAnimationFrame(this.render);
     }
   }
@@ -281,7 +269,6 @@ export abstract class BaseTail {
   private render(time: number): void {
     if (!this.isRendering) return;
 
-    // --- Idle check: stop loop when all particles have faded ---
     if (time - this.lastParticleTime > IDLE_TIMEOUT_MS) {
       this.gl.clearColor(0, 0, 0, 0);
       this.gl.clear(this.gl.COLOR_BUFFER_BIT);
@@ -289,7 +276,6 @@ export abstract class BaseTail {
       return;
     }
 
-    // --- 60fps frame gate: skip this frame if we're running faster ---
     const elapsed = time - this.lastFrameTime;
     if (elapsed < TARGET_FRAME_MS) {
       requestAnimationFrame(this.render);
@@ -318,7 +304,6 @@ export abstract class BaseTail {
     this.applyCustomUniforms(time);
 
     gl.bindVertexArray(this.vao);
-    // Only draw up to the number of particles we've actually written
     gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, this.activeParticleCount);
     gl.bindVertexArray(null);
 
@@ -328,7 +313,6 @@ export abstract class BaseTail {
   public destroy(): void {
     this.isRendering = false;
 
-    // Cancel any pending resize debounce
     if (this.resizeTimer !== null) {
       clearTimeout(this.resizeTimer);
       this.resizeTimer = null;
@@ -336,7 +320,7 @@ export abstract class BaseTail {
 
     window.removeEventListener("resize", this.boundResize);
 
-    // Release all WebGL resources — critical for tail switching without memory leaks
+    /* Release WebGL resources so tail switching doesn't leak GPU memory. */
     if (this.program) this.gl.deleteProgram(this.program);
     if (this.instanceBuffer) this.gl.deleteBuffer(this.instanceBuffer);
     if (this.quadBuffer) this.gl.deleteBuffer(this.quadBuffer);

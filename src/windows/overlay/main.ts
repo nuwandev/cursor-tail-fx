@@ -27,12 +27,16 @@ function stopOverlayRendering(): void {
     renderer = null;
   }
 
-  // Shrink + clear the canvas without touching WebGL APIs (avoids spinning up
-  // a new context while disabled and reduces backing buffer memory).
+  /*
+   * Shrink + clear the canvas without touching WebGL APIs.
+   * This avoids spinning up a new context while disabled and reduces backing-buffer memory.
+   */
   if (canvasEl) {
-    // Force a visual clear: some WebView/Windows compositor paths can keep the
-    // last composed WebGL frame visible on a transparent window unless the
-    // element is removed from layout.
+    /*
+     * Force a visual clear: some WebView/Windows compositor paths can keep the last
+     * composed WebGL frame visible on a transparent window unless the element is removed
+     * from layout.
+     */
     canvasEl.style.display = "none";
     canvasEl.width = 1;
     canvasEl.height = 1;
@@ -42,15 +46,13 @@ function stopOverlayRendering(): void {
 function startOverlayRendering(): void {
   if (!canvasEl) return;
   if (renderer) return;
-  // Ensure the config we pass to the renderer includes a fully
-  // hydrated tail config for the currently active tail. On a true
-  // first run, tailConfigs will be empty until something (usually
-  // the Settings window) calls getTailConfig at least once.
+  /*
+   * Ensure the config we pass to the renderer includes a hydrated entry for the active tail.
+   * On a true first run, `tailConfigs` can be empty until something calls `getTailConfig()`.
+   */
   const initial = configManager.getState();
   const activeTailId = initial.activeTailId;
 
-  // This call creates and persists the ideal default TailSpecificConfig
-  // for the active tail if it doesn't exist yet.
   configManager.getTailConfig(activeTailId);
 
   const hydratedConfig = configManager.getState();
@@ -70,11 +72,9 @@ async function init() {
     if (tailEnabled) startOverlayRendering();
     else stopOverlayRendering();
 
-    // Ensure the backend mouse-tracking thread is actually gated.
     void syncBackendTailEnabled(tailEnabled);
 
     onConfigUpdate((config) => {
-      // Keep local persisted config in sync across windows.
       configManager.applyExternalConfig(config);
 
       const nextEnabled = config.tailEnabled !== false;

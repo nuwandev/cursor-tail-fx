@@ -22,7 +22,7 @@ export function onCursorMove(callback: (nx: number, ny: number) => void): void {
 
 export function onConfigUpdate(callback: (config: AppConfig) => void): void {
   listen<AppConfig>(Events.ConfigUpdate, (event) => {
-    // Runtime validation is intentionally minimal; config is normalized downstream.
+    /* Runtime validation is intentionally minimal; config is normalized downstream. */
     if (typeof event.payload === "object" && event.payload !== null) callback(event.payload);
   });
 }

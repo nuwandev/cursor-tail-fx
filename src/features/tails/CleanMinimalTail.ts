@@ -12,9 +12,7 @@ export class CleanMinimalTail extends BaseTail {
     };
   }
 
-  public updateEffect(_dt: number): void {
-    // No-op
-  }
+  public updateEffect(_dt: number): void {}
 }
 
 registerTail({

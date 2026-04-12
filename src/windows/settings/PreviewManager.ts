@@ -12,9 +12,10 @@ interface PreviewEntry {
   pathPhase: number;
 }
 
+const PREVIEW_TIME_SCALE = 0.0008;
+
 function getLissajousPoint(t: number, w: number, h: number, phaseOffset: number) {
-  // Each tail gets a unique phase offset based on its index so previews
-  // don't all animate in lockstep
+  /* Phase offset avoids all previews animating in lockstep. */
   const x = (Math.sin(t * 1.3 + phaseOffset) * 0.38 + 0.5) * w;
   const y = (Math.sin(t * 1 + phaseOffset * 0.7) * 0.32 + 0.5) * h;
   return { x, y };
@@ -80,14 +81,17 @@ export class PreviewManager {
         pathPhase: phaseOffset,
       });
 
-      // Immediately repair the WebGL viewport which BaseTail incorrectly set to window.innerWidth
+      /*
+       * BaseTail sizes its viewport for the full overlay window. In the settings UI we render
+       * into a small preview canvas, so fix the viewport to the canvas dimensions.
+       */
       const gl = canvas.getContext("webgl2");
       if (gl) {
         gl.viewport(0, 0, canvas.width, canvas.height);
       }
     } catch (e) {
       console.error(`[PreviewManager] Failed to init preview for tail ${tailId}:`, e);
-      // Leave the canvas showing its dark background (#080810) per requirements
+      /* Leave the canvas showing its dark background per UI requirements. */
     }
   }
 
@@ -107,7 +111,7 @@ export class PreviewManager {
     const tick = (timestamp: number) => {
       const dpr = Math.min(window.devicePixelRatio, 1.5);
 
-      // Ensure viewport matches canvas dimensions in case BaseTail triggered a wrong resize internally
+      /* Keep viewport in sync if the underlying tail resized itself. */
       const targetW = Math.floor(entry.canvas.clientWidth * dpr);
       const targetH = Math.floor(entry.canvas.clientHeight * dpr);
       if (entry.canvas.width !== targetW || entry.canvas.height !== targetH) {
@@ -117,7 +121,7 @@ export class PreviewManager {
         if (gl) gl.viewport(0, 0, targetW, targetH);
       }
 
-      const t = timestamp * 0.0008; // speed factor
+      const t = timestamp * PREVIEW_TIME_SCALE;
       const { x, y } = getLissajousPoint(
         t,
         entry.canvas.width / dpr,
@@ -126,7 +130,6 @@ export class PreviewManager {
       );
 
       entry.engine.updateMouse(x, y);
-      // tailInstance.render is private and is invoked internally when flushParticles runs via engine.updateMouse
 
       entry.animFrame = requestAnimationFrame(tick);
     };

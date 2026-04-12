@@ -16,8 +16,11 @@ export class Renderer {
     this.initTail(this.config.activeTailId);
   }
 
+  /**
+   * (Re)creates the tail + engine.
+   * Falls back to a known-good tail if the requested one is missing or fails to instantiate.
+   */
   private initTail(tailId: string) {
-    // Always destroy previous
     this.destroy();
     let TailClass;
     let safeTailId = tailId;
@@ -42,7 +45,6 @@ export class Renderer {
       this.tail = new TailClass(this.canvas, tailConfig);
     } catch (e) {
       console.error("FAILING TO INSTANTIATE TAIL:", e);
-      // fallback to comet if instantiation fails
       TailClass = getTailSafe("comet");
       this.tail = new TailClass(this.canvas, tailConfig);
     }

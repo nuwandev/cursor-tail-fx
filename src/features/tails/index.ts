@@ -24,5 +24,8 @@ export function getTailSafe(tailId: string): TailClass {
   throw new Error("No tails have been registered in TailRegistry");
 }
 
-// Eagerly import all Tail files so they auto-register themselves
+/*
+ * Tail modules register themselves via side effects at import time.
+ * This eager glob ensures the registry is populated without a manual import list.
+ */
 import.meta.glob("./*Tail.ts", { eager: true });

@@ -12,9 +12,7 @@ export class OrbTail extends BaseTail {
     };
   }
 
-  public updateEffect(_dt: number): void {
-    // OrbTail-specific per-frame logic (if any)
-  }
+  public updateEffect(_dt: number): void {}
 }
 
 registerTail({

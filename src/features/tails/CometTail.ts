@@ -12,9 +12,7 @@ export class CometTail extends BaseTail {
     };
   }
 
-  public updateEffect(_dt: number): void {
-    // CometTail-specific per-frame logic (if any)
-  }
+  public updateEffect(_dt: number): void {}
 }
 
 registerTail({

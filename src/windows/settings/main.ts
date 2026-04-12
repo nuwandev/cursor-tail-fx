@@ -55,8 +55,6 @@ function renderEffectCards() {
   effectCards.innerHTML = "";
 
   const tails = getAllTails();
-
-  // If saved tail no longer exists, fall back to first safely
   const validId = tails.some((t) => t.id === activeTailId)
     ? activeTailId
     : (tails[0]?.id ?? "comet");
@@ -185,8 +183,6 @@ function renderThemeSwatches() {
     swatches.appendChild(label);
   });
 }
-
-// ─── Slider elements ──────────────────────────────────────────────
 const sizeSlider = document.getElementById("size-slider") as HTMLInputElement;
 const lengthSlider = document.getElementById("length-slider") as HTMLInputElement;
 const opacitySlider = document.getElementById("opacity-slider") as HTMLInputElement;
@@ -234,7 +230,6 @@ opacitySlider.addEventListener("input", (e) => {
 });
 opacitySlider.addEventListener("change", () => broadcastUpdate());
 
-// ─── Tabs ─────────────────────────────────────────────────────────
 document.querySelectorAll<HTMLElement>(".nav-item").forEach((item) => {
   item.addEventListener("click", (e) => {
     e.preventDefault();
@@ -246,7 +241,6 @@ document.querySelectorAll<HTMLElement>(".nav-item").forEach((item) => {
   });
 });
 
-// ─── Reset ────────────────────────────────────────────────────────
 document.getElementById("reset-btn")?.addEventListener("click", () => {
   const confirmed = globalThis.confirm(
     "Reset the settings for THIS tail to defaults? This will apply immediately.",
@@ -290,7 +284,6 @@ document.getElementById("quit-btn")?.addEventListener("click", () => {
   })();
 });
 
-// ─── Sync from external config changes ───────────────────────────
 onConfigUpdate((config) => {
   configManager.applyExternalConfig(config);
   activeTailId = configManager.getState().activeTailId;
@@ -308,7 +301,6 @@ onConfigUpdate((config) => {
   syncTailToggleButton();
 });
 
-// ─── Init ─────────────────────────────────────────────────────────
 async function initPreviews() {
   const container = document.getElementById("effect-cards")!;
   await previewManager.init(container);

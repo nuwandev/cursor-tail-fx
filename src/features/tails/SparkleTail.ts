@@ -12,9 +12,7 @@ export class SparkleTail extends BaseTail {
     };
   }
 
-  public updateEffect(_dt: number): void {
-    // SparkleTail-specific per-frame logic (if any)
-  }
+  public updateEffect(_dt: number): void {}
 }
 
 registerTail({

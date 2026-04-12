@@ -8,9 +8,7 @@ export class GamerHUDTail extends BaseTail {
   public getShaders() {
     return { vertex: vert, fragment: frag };
   }
-  public updateEffect(_dt: number): void {
-    // specific per-frame logic (if any)
-  }
+  public updateEffect(_dt: number): void {}
 }
 
 registerTail({
