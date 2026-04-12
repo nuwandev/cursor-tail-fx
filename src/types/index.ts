@@ -1,10 +1,9 @@
 // Centralized generic types for Cursora
 
 // 1. Config Types
-export type ThemeId = string;
 
 export interface ThemeMeta {
-  id: ThemeId;
+  id: string;
   name: string;
   rgb: [number, number, number];
 }
@@ -12,7 +11,7 @@ export interface ThemeMeta {
 export const CURRENT_CONFIG_VERSION = 2;
 
 export interface TailSpecificConfig {
-  themeId: ThemeId;
+  themeId: string;
   sizeMultiplier: number;
   lengthMultiplier: number;
   opacityMultiplier: number;
@@ -44,7 +43,6 @@ export type CursorMovePayload = [nx: number, ny: number];
 // - config-update: full AppConfig object
 export type ConfigUpdatePayload = AppConfig;
 // - tray-toggle-tail: no payload (request from backend tray)
-export type TrayToggleTailPayload = null;
 
 // 3. Tail Registry Types
 import type { BaseTail } from "@/features/tails/BaseTail";
