@@ -148,7 +148,7 @@ pub fn run() {
             "settings",
             tauri::WebviewUrl::App("src/windows/settings/index.html".into()),
         )
-        .title("Cursora — Settings")
+        .title("Cursora | Settings")
         .inner_size(860.0, 620.0)
         .min_inner_size(700.0, 520.0)
         .resizable(true)
