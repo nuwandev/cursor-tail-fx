@@ -27,12 +27,12 @@ Tauri prerequisites: <https://tauri.app/start/prerequisites/>
 
 ```bash
 npm install
-npm run tauri dev
+npm run tauri -- dev
 ```
 
 ### Scripts
 
-- `npm run tauri dev` — run the full desktop app (overlay + tray + settings)
+- `npm run tauri -- dev` — run the full desktop app (overlay + tray + settings)
 - `npm run tauri build` — build and bundle installers/artifacts
 - `npm run dev` — run the Vite dev server (frontend-only)
 - `npm run build` — typecheck + build the frontend bundle
@@ -102,7 +102,7 @@ This repo is set up so new effects are easy: add a `*Tail.ts` file + shaders, re
 1. Copy one of the existing tails (e.g. `CometTail.ts`) and rename it.
 2. Copy the matching shaders and tweak the visuals.
 3. Update the `registerTail({ id, name, description, class })` metadata.
-4. Run `npm run tauri dev` → open Settings → your effect should be listed under **Effects**.
+4. Run `npm run tauri -- dev` → open Settings → your effect should be listed under **Effects**.
 
 ### 1) Create a new `*Tail.ts` file
 
