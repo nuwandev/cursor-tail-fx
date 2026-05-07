@@ -284,6 +284,68 @@ document.getElementById("quit-btn")?.addEventListener("click", () => {
   })();
 });
 
+const autostartCheckbox = document.getElementById("autostart-checkbox") as HTMLInputElement | null;
+
+// Track pending autostart operation to prevent race conditions
+let autostartPending = false;
+let windowUnloaded = false;
+
+// Clean up on window unload
+window.addEventListener("beforeunload", () => {
+  windowUnloaded = true;
+});
+
+// Initialize autostart checkbox state
+async function initAutostartCheckbox(): Promise<void> {
+  if (!autostartCheckbox || windowUnloaded) return;
+  try {
+    const isEnabled = await invoke<boolean>("is_autostart_enabled");
+    if (!windowUnloaded) {
+      autostartCheckbox.checked = isEnabled;
+    }
+  } catch (err) {
+    console.warn("Could not query autostart status:", err);
+  }
+}
+
+autostartCheckbox?.addEventListener("change", () => {
+  // Prevent concurrent operations; debounce by ignoring changes while one is pending
+  if (autostartPending || windowUnloaded) {
+    return;
+  }
+
+  autostartPending = true;
+  const desiredState = autostartCheckbox.checked;
+
+  void (async () => {
+    try {
+      await invoke("set_autostart", { enable: desiredState });
+    } catch (err) {
+      console.error("Failed to set autostart:", err);
+      if (!windowUnloaded) {
+        globalThis.alert("Could not change autostart setting.");
+        // Revert checkbox to last known good state
+        try {
+          const isEnabled = await invoke<boolean>("is_autostart_enabled");
+          if (!windowUnloaded) {
+            autostartCheckbox.checked = isEnabled;
+          }
+        } catch (revertErr) {
+          console.error("Could not revert autostart checkbox:", revertErr);
+          if (!windowUnloaded) {
+            // Last resort: manually set to opposite of attempted state
+            autostartCheckbox.checked = !desiredState;
+          }
+        }
+      }
+    } finally {
+      if (!windowUnloaded) {
+        autostartPending = false;
+      }
+    }
+  })();
+});
+
 onConfigUpdate((config) => {
   configManager.applyExternalConfig(config);
   activeTailId = configManager.getState().activeTailId;
@@ -317,5 +379,6 @@ document.addEventListener("DOMContentLoaded", () => {
   renderThemeSwatches();
   syncSliders();
   syncTailToggleButton();
+  void initAutostartCheckbox();
   broadcastUpdate();
 });
