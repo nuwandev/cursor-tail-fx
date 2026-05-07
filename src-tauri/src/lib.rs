@@ -48,6 +48,86 @@ fn quit_app(app: tauri::AppHandle) {
     app.exit(0);
 }
 
+/// Enable or disable autostart on Windows (per-user Run key).
+/// If enable=true and a stale entry exists, it is updated to the current exe path.
+#[tauri::command]
+fn set_autostart(enable: bool) -> Result<bool, String> {
+    #[cfg(target_os = "windows")]
+    {
+        use winreg::enums::*;
+        use winreg::RegKey;
+
+        let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+        let exe_str = exe
+            .to_str()
+            .ok_or_else(|| "executable path not valid unicode".to_string())?;
+
+        let key_path = r"Software\Microsoft\Windows\CurrentVersion\Run";
+        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+        let (key, _disp) = hkcu
+            .create_subkey(key_path)
+            .map_err(|e| format!("failed to open registry key: {}", e))?;
+
+        let value_name = "cursor-tail";
+
+        if enable {
+            // Quote the path to be safe. Exact path ensures Windows can find the executable.
+            let cmd = format!("\"{}\"", exe_str);
+            key.set_value(value_name, &cmd)
+                .map_err(|e| format!("failed to set registry value: {}", e))?;
+        } else {
+            let _ = key.delete_value(value_name);
+        }
+
+        Ok(true)
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        Err("autostart is only supported on Windows in this build".into())
+    }
+}
+
+/// Returns whether autostart is enabled for this app (Windows only).
+/// Handles cases where the app was moved or path changed, and normalizes the comparison.
+#[tauri::command]
+fn is_autostart_enabled() -> Result<bool, String> {
+    #[cfg(target_os = "windows")]
+    {
+        use winreg::enums::*;
+        use winreg::RegKey;
+
+        let exe = std::env::current_exe().map_err(|e| e.to_string())?;
+        let exe_str = exe
+            .to_str()
+            .ok_or_else(|| "executable path not valid unicode".to_string())?;
+
+        let key_path = r"Software\Microsoft\Windows\CurrentVersion\Run";
+        let hkcu = RegKey::predef(HKEY_CURRENT_USER);
+
+        match hkcu.open_subkey(key_path) {
+            Ok(key) => match key.get_value::<String, &str>("cursor-tail") {
+                Ok(val) => {
+                    // Normalize: remove quotes and convert to lowercase for case-insensitive comparison
+                    // (Windows NTFS is case-insensitive but Rust paths preserve case)
+                    let stored_path = val.trim_matches('"').to_lowercase();
+                    let current_path = exe_str.to_lowercase();
+
+                    // Match if the stored path is our current exe
+                    Ok(stored_path == current_path)
+                }
+                Err(_) => Ok(false),
+            },
+            Err(_) => Ok(false),
+        }
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        Err("autostart is only supported on Windows in this build".into())
+    }
+}
+
 /// Enables or disables the tail effect (gates the polling thread).
 #[tauri::command]
 fn set_tail_enabled(enabled: bool, gate: tauri::State<'_, Arc<TailGate>>) {
@@ -234,7 +314,12 @@ pub fn run() {
 
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![quit_app, set_tail_enabled])
+        .invoke_handler(tauri::generate_handler![
+            quit_app,
+            set_tail_enabled,
+            set_autostart,
+            is_autostart_enabled
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
