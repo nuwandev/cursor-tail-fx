@@ -138,6 +138,7 @@ fn set_tail_enabled(enabled: bool, gate: tauri::State<'_, Arc<TailGate>>) {
 pub fn run() {
     fn show_settings_window(app: &tauri::AppHandle) {
         if let Some(win) = app.get_webview_window("settings") {
+            let _ = win.set_shadow(false);
             let _ = win.set_resizable(false);
             let _ = win.set_maximizable(false);
             let _ = win.show();
@@ -153,6 +154,7 @@ pub fn run() {
         .title("Cursora | Settings")
         .inner_size(860.0, 620.0)
         .min_inner_size(700.0, 520.0)
+        .shadow(false)
         .resizable(false)
         .maximizable(false)
         .build();
@@ -191,11 +193,14 @@ pub fn run() {
                         ex_style | (WS_EX_LAYERED.0 as i32) | (WS_EX_TRANSPARENT.0 as i32),
                     );
 
+                    let _ = window.set_shadow(false);
+                    let _ = window.set_ignore_cursor_events(true);
+
                     // Stretch overlay to cover all monitors (multi-monitor setups)
                     let x = GetSystemMetrics(SM_XVIRTUALSCREEN);
                     let y = GetSystemMetrics(SM_YVIRTUALSCREEN);
                     let cx = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-                    let cy = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+                    let cy = GetSystemMetrics(SM_CYVIRTUALSCREEN).saturating_sub(1);
 
                     SetWindowPos(
                         hwnd,
