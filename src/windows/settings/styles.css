@@ -216,6 +216,15 @@ body {
   cursor: not-allowed;
 }
 
+.system-actions {
+  margin-top: 12px;
+}
+
+.system-actions .settings-action-btn {
+  width: auto;
+  min-width: 180px;
+}
+
 /* ─── Main Content ───────────────────────────────────────────────── */
 .content {
   flex: 1;
