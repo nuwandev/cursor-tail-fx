@@ -138,6 +138,8 @@ fn set_tail_enabled(enabled: bool, gate: tauri::State<'_, Arc<TailGate>>) {
 pub fn run() {
     fn show_settings_window(app: &tauri::AppHandle) {
         if let Some(win) = app.get_webview_window("settings") {
+            let _ = win.set_resizable(false);
+            let _ = win.set_maximizable(false);
             let _ = win.show();
             let _ = win.set_focus();
             return;
@@ -151,7 +153,8 @@ pub fn run() {
         .title("Cursora | Settings")
         .inner_size(860.0, 620.0)
         .min_inner_size(700.0, 520.0)
-        .resizable(true)
+        .resizable(false)
+        .maximizable(false)
         .build();
     }
 
