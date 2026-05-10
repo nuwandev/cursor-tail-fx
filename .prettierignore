@@ -1,0 +1,17 @@
+# Prettier ignore file (gitignore-style)
+# Keeps generated/build artifacts out of formatting runs.
+
+node_modules/
+dist/
+dist-ssr/
+
+# Rust/Tauri build output
+src-tauri/target/
+
+# Generated Tauri schemas and other gen output
+src-tauri/gen/
+
+# Common editor/OS noise
+.vscode/
+.idea/
+.DS_Store

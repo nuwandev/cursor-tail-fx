@@ -1,111 +1,384 @@
-import { emit, listen } from "@tauri-apps/api/event";
-import { AppConfig, DEFAULT_CONFIG, loadConfig, saveConfig } from "../../config";
+import { configManager } from "@/shared/config";
+import { emitConfigUpdate, onConfigUpdate } from "@/shared/ipc/events";
+import { getAllTails } from "@/features/tails";
+import { ThemeRegistry } from "@/shared/config/themes";
+import { openUrl } from "@tauri-apps/plugin-opener";
+import { invoke } from "@tauri-apps/api/core";
+import { PreviewManager } from "./PreviewManager";
 
-let currentConfig: AppConfig = loadConfig();
+let activeTailId = configManager.getState().activeTailId;
+let currentTailConfig = configManager.getTailConfig(activeTailId);
 
-// Input Elements
-const effectRadios = document.querySelectorAll<HTMLInputElement>('input[name="effect"]');
-const themeRadios = document.querySelectorAll<HTMLInputElement>('input[name="theme"]');
+const previewManager = new PreviewManager();
 
+const REPO_URL = "https://github.com/nuwandev/cursor-tail-fx";
+
+const tailToggleBtn = document.getElementById("tail-toggle-btn") as HTMLButtonElement | null;
+
+function syncTailToggleButton(): void {
+  if (!tailToggleBtn) return;
+  const enabled = configManager.getState().tailEnabled !== false;
+  tailToggleBtn.textContent = enabled ? "Disable Tail Effect" : "Enable Tail Effect";
+}
+
+function broadcastUpdate() {
+  emitConfigUpdate(configManager.getState());
+}
+
+tailToggleBtn?.addEventListener("click", () => {
+  const current = configManager.getState();
+  configManager.setTailEnabled(!current.tailEnabled);
+  syncTailToggleButton();
+  broadcastUpdate();
+});
+
+function handleTailSwitch(tailId: string) {
+  configManager.setActiveTailId(tailId);
+  activeTailId = tailId;
+  currentTailConfig = configManager.getTailConfig(tailId);
+
+  previewManager.destroyAll();
+  renderEffectCards();
+
+  void (async () => {
+    await previewManager.init(document.getElementById("effect-cards")!);
+    previewManager.startAll();
+  })();
+
+  renderThemeSwatches();
+  syncSliders();
+  broadcastUpdate();
+}
+
+function renderEffectCards() {
+  const effectCards = document.getElementById("effect-cards") as HTMLDivElement;
+  effectCards.innerHTML = "";
+
+  const tails = getAllTails();
+  const validId = tails.some((t) => t.id === activeTailId)
+    ? activeTailId
+    : (tails[0]?.id ?? "comet");
+
+  if (validId !== activeTailId) {
+    handleTailSwitch(validId);
+    return;
+  }
+
+  tails.forEach((tail) => {
+    const label = document.createElement("label");
+    label.className = "radio-card";
+
+    const input = document.createElement("input");
+    input.type = "radio";
+    input.name = "tailId";
+    input.value = tail.id;
+    input.id = `effect-radio-${tail.id}`;
+    if (tail.id === activeTailId) input.checked = true;
+
+    input.addEventListener("change", () => {
+      if (input.checked) {
+        handleTailSwitch(tail.id);
+      }
+    });
+
+    const cardContent = document.createElement("div");
+    cardContent.className = "card-content";
+
+    const canvas = document.createElement("canvas");
+    canvas.className = "tail-preview-canvas";
+    canvas.width = 280;
+    canvas.height = 100;
+    canvas.dataset.tailId = tail.id;
+
+    const info = document.createElement("div");
+    info.className = "card-info";
+
+    const title = document.createElement("span");
+    title.className = "card-title";
+    title.textContent = tail.name;
+
+    const creatorLine = document.createElement("span");
+    creatorLine.className = "card-creator";
+    creatorLine.append("by ");
+
+    const creatorName = tail.creator?.name?.trim() || "Unknown";
+    const creatorUrl = tail.creator?.url?.trim();
+    if (creatorUrl) {
+      const link = document.createElement("a");
+      link.href = creatorUrl;
+      link.textContent = creatorName;
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        void (async () => {
+          try {
+            await openUrl(creatorUrl);
+          } catch (err) {
+            console.error("Failed to open creator link:", err);
+          }
+        })();
+      });
+      creatorLine.appendChild(link);
+    } else {
+      creatorLine.append(creatorName);
+    }
+
+    const desc = document.createElement("span");
+    desc.className = "card-desc";
+    desc.textContent = tail.description;
+
+    info.appendChild(title);
+    info.appendChild(creatorLine);
+    info.appendChild(desc);
+    cardContent.appendChild(canvas);
+    cardContent.appendChild(info);
+    label.appendChild(input);
+    label.appendChild(cardContent);
+    effectCards.appendChild(label);
+  });
+}
+
+function renderThemeSwatches() {
+  const swatches = document.getElementById("theme-swatches") as HTMLDivElement;
+  swatches.innerHTML = "";
+
+  ThemeRegistry.forEach((theme) => {
+    const label = document.createElement("label");
+    label.className = "swatch-container";
+
+    const input = document.createElement("input");
+    input.type = "radio";
+    input.name = "theme";
+    input.value = theme.id;
+    if (theme.id === currentTailConfig.themeId) input.checked = true;
+
+    input.addEventListener("change", () => {
+      if (input.checked) {
+        configManager.updateTailConfig(activeTailId, { themeId: theme.id });
+        currentTailConfig = configManager.getTailConfig(activeTailId);
+        broadcastUpdate();
+        previewManager.updateConfigForId(activeTailId, currentTailConfig);
+      }
+    });
+
+    const [r, g, b] = theme.rgb;
+    const color = `rgb(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)})`;
+    const glow = `rgba(${Math.round(r * 255)}, ${Math.round(g * 255)}, ${Math.round(b * 255)}, 0.5)`;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "swatch-wrapper";
+
+    const swatch = document.createElement("div");
+    swatch.className = "swatch";
+    swatch.style.background = color;
+    swatch.style.boxShadow = `0 0 10px ${glow}`;
+
+    wrapper.appendChild(swatch);
+    const name = document.createElement("span");
+    name.textContent = theme.name;
+
+    label.appendChild(input);
+    label.appendChild(wrapper);
+    label.appendChild(name);
+    swatches.appendChild(label);
+  });
+}
 const sizeSlider = document.getElementById("size-slider") as HTMLInputElement;
 const lengthSlider = document.getElementById("length-slider") as HTMLInputElement;
 const opacitySlider = document.getElementById("opacity-slider") as HTMLInputElement;
-
-const sizeVal = document.getElementById("size-val") as HTMLDivElement;
-const lengthVal = document.getElementById("length-val") as HTMLDivElement;
-const opacityVal = document.getElementById("opacity-val") as HTMLDivElement;
-
-const resetBtn = document.getElementById("reset-btn") as HTMLButtonElement;
-const navItems = document.querySelectorAll<HTMLLIElement>(".nav-item");
-const tabPanes = document.querySelectorAll<HTMLDivElement>(".tab-pane");
-
-function broadcastUpdate() {
-  saveConfig(currentConfig);
-  emit("config-update", currentConfig);
-}
-
-function initUI() {
-  effectRadios.forEach(r => r.checked = r.value === currentConfig.effect);
-  themeRadios.forEach(r => r.checked = r.value === currentConfig.theme);
-
-  sizeSlider.value = currentConfig.sizeMultiplier.toString();
-  lengthSlider.value = currentConfig.lengthMultiplier.toString();
-  opacitySlider.value = currentConfig.opacityMultiplier.toString();
-
-  updateLabels();
-}
+const sizeVal = document.getElementById("size-val") as HTMLElement;
+const lengthVal = document.getElementById("length-val") as HTMLElement;
+const opacityVal = document.getElementById("opacity-val") as HTMLElement;
 
 function updateLabels() {
-  sizeVal.innerText = `${currentConfig.sizeMultiplier.toFixed(1)}x`;
-  lengthVal.innerText = `${currentConfig.lengthMultiplier.toFixed(1)}x`;
-  opacityVal.innerText = `${currentConfig.opacityMultiplier.toFixed(1)}x`;
+  sizeVal.innerText = `${currentTailConfig.sizeMultiplier.toFixed(1)}×`;
+  lengthVal.innerText = `${currentTailConfig.lengthMultiplier.toFixed(1)}×`;
+  opacityVal.innerText = `${currentTailConfig.opacityMultiplier.toFixed(1)}×`;
 }
 
-// BINDINGS
-effectRadios.forEach(radio => {
-  radio.addEventListener("change", (e) => {
-    if ((e.target as HTMLInputElement).checked) {
-      currentConfig.effect = (e.target as HTMLInputElement).value as any;
-      broadcastUpdate();
-    }
-  });
-});
-
-themeRadios.forEach(radio => {
-  radio.addEventListener("change", (e) => {
-    if ((e.target as HTMLInputElement).checked) {
-      currentConfig.theme = (e.target as HTMLInputElement).value as any;
-      broadcastUpdate();
-    }
-  });
-});
+function syncSliders() {
+  sizeSlider.value = currentTailConfig.sizeMultiplier.toString();
+  lengthSlider.value = currentTailConfig.lengthMultiplier.toString();
+  opacitySlider.value = currentTailConfig.opacityMultiplier.toString();
+  updateLabels();
+}
 
 sizeSlider.addEventListener("input", (e) => {
-  currentConfig.sizeMultiplier = parseFloat((e.target as HTMLInputElement).value);
+  const val = Number.parseFloat((e.target as HTMLInputElement).value);
+  configManager.updateTailConfig(activeTailId, { sizeMultiplier: val });
+  currentTailConfig = configManager.getTailConfig(activeTailId);
   updateLabels();
+  previewManager.updateConfigForId(activeTailId, currentTailConfig);
 });
 sizeSlider.addEventListener("change", () => broadcastUpdate());
 
 lengthSlider.addEventListener("input", (e) => {
-  currentConfig.lengthMultiplier = parseFloat((e.target as HTMLInputElement).value);
+  const val = Number.parseFloat((e.target as HTMLInputElement).value);
+  configManager.updateTailConfig(activeTailId, { lengthMultiplier: val });
+  currentTailConfig = configManager.getTailConfig(activeTailId);
   updateLabels();
+  previewManager.updateConfigForId(activeTailId, currentTailConfig);
 });
 lengthSlider.addEventListener("change", () => broadcastUpdate());
 
 opacitySlider.addEventListener("input", (e) => {
-  currentConfig.opacityMultiplier = parseFloat((e.target as HTMLInputElement).value);
+  const val = Number.parseFloat((e.target as HTMLInputElement).value);
+  configManager.updateTailConfig(activeTailId, { opacityMultiplier: val });
+  currentTailConfig = configManager.getTailConfig(activeTailId);
   updateLabels();
+  previewManager.updateConfigForId(activeTailId, currentTailConfig);
 });
 opacitySlider.addEventListener("change", () => broadcastUpdate());
 
-// Tabs
-navItems.forEach(item => {
-  item.addEventListener("click", () => {
-    navItems.forEach(n => n.classList.remove("active"));
-    tabPanes.forEach(t => t.classList.remove("active"));
-
+document.querySelectorAll<HTMLElement>(".nav-item").forEach((item) => {
+  item.addEventListener("click", (e) => {
+    e.preventDefault();
+    document.querySelectorAll(".nav-item").forEach((n) => n.classList.remove("active"));
+    document.querySelectorAll(".tab-pane").forEach((t) => t.classList.remove("active"));
     item.classList.add("active");
-    const target = item.getAttribute("data-target");
-    if (target) {
-      document.getElementById(target)?.classList.add("active");
-    }
+    const target = item.dataset.target;
+    if (target) document.getElementById(target)?.classList.add("active");
   });
 });
 
-// Reset
-resetBtn.addEventListener("click", () => {
-  currentConfig = { ...DEFAULT_CONFIG };
-  initUI();
+document.getElementById("reset-btn")?.addEventListener("click", () => {
+  const confirmed = globalThis.confirm(
+    "Reset the settings for THIS tail to defaults? This will apply immediately.",
+  );
+  if (!confirmed) return;
+
+  configManager.resetTailConfig(activeTailId);
+  currentTailConfig = configManager.getTailConfig(activeTailId);
+
+  previewManager.destroyAll();
+  renderEffectCards();
+  void (async () => {
+    await previewManager.init(document.getElementById("effect-cards")!);
+    previewManager.startAll();
+  })();
+
+  renderThemeSwatches();
+  syncSliders();
   broadcastUpdate();
 });
 
-// Sync from changes that might happen externally
-listen<AppConfig>("config-update", (event) => {
-  currentConfig = event.payload;
-  initUI();
+document.getElementById("open-repo-btn")?.addEventListener("click", () => {
+  void (async () => {
+    try {
+      await openUrl(REPO_URL);
+    } catch (err) {
+      console.error("Failed to open repo link:", err);
+      globalThis.alert("Could not open the GitHub repo.");
+    }
+  })();
+});
+
+document.getElementById("quit-btn")?.addEventListener("click", () => {
+  void (async () => {
+    try {
+      await invoke("quit_app");
+    } catch (err) {
+      console.error("Failed to quit app:", err);
+      globalThis.alert("Could not quit the app.");
+    }
+  })();
+});
+
+const autostartCheckbox = document.getElementById("autostart-checkbox") as HTMLInputElement | null;
+
+// Track pending autostart operation to prevent race conditions
+let autostartPending = false;
+let windowUnloaded = false;
+
+// Clean up on window unload
+window.addEventListener("beforeunload", () => {
+  windowUnloaded = true;
+});
+
+// Initialize autostart checkbox state
+async function initAutostartCheckbox(): Promise<void> {
+  if (!autostartCheckbox || windowUnloaded) return;
+  try {
+    const isEnabled = await invoke<boolean>("is_autostart_enabled");
+    if (!windowUnloaded) {
+      autostartCheckbox.checked = isEnabled;
+    }
+  } catch (err) {
+    console.warn("Could not query autostart status:", err);
+  }
+}
+
+autostartCheckbox?.addEventListener("change", () => {
+  // Prevent concurrent operations; debounce by ignoring changes while one is pending
+  if (autostartPending || windowUnloaded) {
+    return;
+  }
+
+  autostartPending = true;
+  const desiredState = autostartCheckbox.checked;
+
+  void (async () => {
+    try {
+      await invoke("set_autostart", { enable: desiredState });
+    } catch (err) {
+      console.error("Failed to set autostart:", err);
+      if (!windowUnloaded) {
+        globalThis.alert("Could not change autostart setting.");
+        // Revert checkbox to last known good state
+        try {
+          const isEnabled = await invoke<boolean>("is_autostart_enabled");
+          if (!windowUnloaded) {
+            autostartCheckbox.checked = isEnabled;
+          }
+        } catch (revertErr) {
+          console.error("Could not revert autostart checkbox:", revertErr);
+          if (!windowUnloaded) {
+            // Last resort: manually set to opposite of attempted state
+            autostartCheckbox.checked = !desiredState;
+          }
+        }
+      }
+    } finally {
+      if (!windowUnloaded) {
+        autostartPending = false;
+      }
+    }
+  })();
+});
+
+onConfigUpdate((config) => {
+  configManager.applyExternalConfig(config);
+  activeTailId = configManager.getState().activeTailId;
+  currentTailConfig = configManager.getTailConfig(activeTailId);
+
+  previewManager.destroyAll();
+  renderEffectCards();
+  void (async () => {
+    await previewManager.init(document.getElementById("effect-cards")!);
+    previewManager.startAll();
+  })();
+
+  renderThemeSwatches();
+  syncSliders();
+  syncTailToggleButton();
+});
+
+async function initPreviews() {
+  const container = document.getElementById("effect-cards")!;
+  await previewManager.init(container);
+  previewManager.startAll();
+}
+
+window.addEventListener("beforeunload", () => {
+  previewManager.destroyAll();
 });
 
 document.addEventListener("DOMContentLoaded", () => {
-    broadcastUpdate();
-    initUI();
+  renderEffectCards();
+  void initPreviews();
+  renderThemeSwatches();
+  syncSliders();
+  syncTailToggleButton();
+  void initAutostartCheckbox();
+  broadcastUpdate();
 });

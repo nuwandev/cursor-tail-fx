@@ -1,0 +1,57 @@
+name: "New Tail Effect"
+description: "Propose or contribute a new cursor tail effect"
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping expand Cursora’s effects.
+
+        If you’re ready to implement, feel free to open a PR directly.
+
+  - type: input
+    id: name
+    attributes:
+      label: Effect name
+      placeholder: "Nebula"
+    validations:
+      required: true
+
+  - type: input
+    id: tail_id
+    attributes:
+      label: Tail id
+      description: "Stable unique id used in `registerTail({ id: ... })`"
+      placeholder: "nebula"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: "One-line description shown in Settings"
+      placeholder: "Soft nebula glow with gentle drift"
+    validations:
+      required: true
+
+  - type: textarea
+    id: references
+    attributes:
+      label: Inspiration / references (optional)
+      placeholder: "Links, sketches, or notes"
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Implementation checklist
+      options:
+        - label: "I will add a new `*Tail.ts` file under `src/features/tails/`."
+        - label: "I will add shaders under `src/features/tails/shaders/` and import them with `?raw`."
+        - label: "I will register the tail via `registerTail({ id, name, description, class })`."
+        - label: "I will verify it appears in Settings → Effects."
+
+  - type: markdown
+    attributes:
+      value: |
+        Guide: see `CONTRIBUTING.md` → “Creating a new tail effect”.

@@ -1,10 +1,11 @@
 import { defineConfig } from "vite";
+import tsconfigPaths from "vite-tsconfig-paths";
 
-// @ts-expect-error process is a nodejs global
 const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({
+  plugins: [tsconfigPaths()],
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
@@ -17,10 +18,10 @@ export default defineConfig(async () => ({
     host: host || false,
     hmr: host
       ? {
-        protocol: "ws",
-        host,
-        port: 1421,
-      }
+          protocol: "ws",
+          host,
+          port: 1421,
+        }
       : undefined,
     watch: {
       // 3. tell Vite to ignore watching `src-tauri`
@@ -30,9 +31,9 @@ export default defineConfig(async () => ({
   build: {
     rollupOptions: {
       input: {
-        main: new URL('./src/windows/overlay/index.html', import.meta.url).pathname,
-        settings: new URL('./src/windows/settings/index.html', import.meta.url).pathname
-      }
-    }
-  }
+        main: new URL("./src/windows/overlay/index.html", import.meta.url).pathname,
+        settings: new URL("./src/windows/settings/index.html", import.meta.url).pathname,
+      },
+    },
+  },
 }));

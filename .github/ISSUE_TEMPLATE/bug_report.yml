@@ -1,0 +1,53 @@
+name: "Bug Report"
+description: "Report a problem with Cursora"
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report! If you can, include screenshots or a short recording.
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      placeholder: "v1.0.0 (from Settings → About)"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: windows_version
+    attributes:
+      label: Windows version
+      options:
+        - Windows 11
+        - Windows 10
+        - Other
+    validations:
+      required: false
+
+  - type: textarea
+    id: what_happened
+    attributes:
+      label: What happened?
+      placeholder: "Describe the issue and what you expected instead."
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / console output (optional)
+      description: "Paste any relevant console output."
+      render: shell

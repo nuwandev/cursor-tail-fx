@@ -1,0 +1,24 @@
+import { BaseTail } from "./BaseTail";
+import { registerTail } from "./registry";
+
+import cometVert from "./shaders/comet.vert.glsl?raw";
+import cometFrag from "./shaders/comet.frag.glsl?raw";
+
+export class CometTail extends BaseTail {
+  public getShaders() {
+    return {
+      vertex: cometVert,
+      fragment: cometFrag,
+    };
+  }
+
+  public updateEffect(_dt: number): void {}
+}
+
+registerTail({
+  id: "comet",
+  name: "Comet",
+  description: "A comet-like trail",
+  creator: { name: "nuwandev" },
+  class: CometTail,
+});

@@ -1,69 +1,111 @@
-import { listen } from "@tauri-apps/api/event";
-import { AppConfig, loadConfig } from "../../config";
-import { BaseTail } from "../../core/tails/BaseTail";
-import { getTailSafe } from "../../core/tails";
+import {
+  emitConfigUpdate,
+  onConfigUpdate,
+  onCursorMove,
+  onTrayToggleTail,
+} from "@/shared/ipc/events";
+import { configManager } from "@/shared/config";
+import { Renderer } from "@/features/tails/Renderer";
+import { invoke } from "@tauri-apps/api/core";
 
-let currentTail: BaseTail | null = null;
-let currentConfig: AppConfig = loadConfig();
+let renderer: Renderer | null = null;
+let tailEnabled = true;
+let canvasEl: HTMLCanvasElement | null = null;
 
-function createTail(effect: string, canvas: HTMLCanvasElement): BaseTail {
-  const TailClass = getTailSafe(effect);
-  return new TailClass(canvas);
+async function syncBackendTailEnabled(enabled: boolean): Promise<void> {
+  try {
+    await invoke("set_tail_enabled", { enabled });
+  } catch (err) {
+    console.warn("Failed to sync tail enabled state to backend:", err);
+  }
+}
+
+function stopOverlayRendering(): void {
+  try {
+    renderer?.destroy();
+  } finally {
+    renderer = null;
+  }
+
+  /*
+   * Shrink + clear the canvas without touching WebGL APIs.
+   * This avoids spinning up a new context while disabled and reduces backing-buffer memory.
+   */
+  if (canvasEl) {
+    /*
+     * Force a visual clear: some WebView/Windows compositor paths can keep the last
+     * composed WebGL frame visible on a transparent window unless the element is removed
+     * from layout.
+     */
+    canvasEl.style.display = "none";
+    canvasEl.width = 1;
+    canvasEl.height = 1;
+  }
+}
+
+function startOverlayRendering(): void {
+  if (!canvasEl) return;
+  if (renderer) return;
+  /*
+   * Ensure the config we pass to the renderer includes a hydrated entry for the active tail.
+   * On a true first run, `tailConfigs` can be empty until something calls `getTailConfig()`.
+   */
+  const initial = configManager.getState();
+  const activeTailId = initial.activeTailId;
+
+  configManager.getTailConfig(activeTailId);
+
+  const hydratedConfig = configManager.getState();
+
+  canvasEl.style.display = "block";
+  renderer = new Renderer(canvasEl, hydratedConfig);
 }
 
 async function init() {
   try {
-    const canvas = document.getElementById("trail-canvas") as HTMLCanvasElement;
-    if (!canvas) throw new Error("Could not find trail-canvas element");
+    canvasEl = document.getElementById("trail-canvas") as HTMLCanvasElement;
+    if (!canvasEl) throw new Error("Could not find trail-canvas element");
 
-    currentTail = createTail(currentConfig.effect, canvas);
-    currentTail.updateConfig(currentConfig);
+    const initialConfig = configManager.getState();
+    tailEnabled = initialConfig.tailEnabled !== false;
 
-    let lastMouse = { x: 0, y: 0 };
-    let hasMouse = false;
+    if (tailEnabled) startOverlayRendering();
+    else stopOverlayRendering();
 
-    // Listen to Configuration Updates
-    listen<AppConfig>("config-update", (event) => {
-      const newConfig = event.payload;
+    void syncBackendTailEnabled(tailEnabled);
 
-      // If effect completely changed, we need to swap the tail engine
-      if (newConfig.effect !== currentConfig.effect) {
-        if (currentTail) currentTail.destroy();
-        currentTail = createTail(newConfig.effect, canvas);
+    onConfigUpdate((config) => {
+      configManager.applyExternalConfig(config);
+
+      const nextEnabled = config.tailEnabled !== false;
+      if (nextEnabled !== tailEnabled) {
+        tailEnabled = nextEnabled;
+        if (tailEnabled) startOverlayRendering();
+        else stopOverlayRendering();
+        void syncBackendTailEnabled(tailEnabled);
       }
 
-      currentConfig = newConfig;
-      if (currentTail) currentTail.updateConfig(currentConfig);
+      if (tailEnabled) {
+        renderer?.handleConfigUpdate(config);
+      }
     });
 
-    // Listen to IPC Mouse Move
-    listen<[number, number]>("cursor-move", (event) => {
-      const [nx, ny] = event.payload;
+    onCursorMove((nx, ny) => {
+      if (!tailEnabled) return;
+      renderer?.handleMouseMove(nx, ny);
+    });
 
-      const x = nx * canvas.width;
-      const y = ny * canvas.height;
-      const now = performance.now();
+    onTrayToggleTail(() => {
+      const current = configManager.getState();
+      const nextEnabled = !current.tailEnabled;
+      configManager.setTailEnabled(nextEnabled);
 
-      if (!hasMouse) {
-        lastMouse = { x, y };
-        hasMouse = true;
-      }
+      tailEnabled = nextEnabled;
+      if (tailEnabled) startOverlayRendering();
+      else stopOverlayRendering();
+      void syncBackendTailEnabled(tailEnabled);
 
-      const dist = Math.hypot(x - lastMouse.x, y - lastMouse.y);
-      const density = 2.0;
-      const count = Math.min(Math.ceil(dist / density), 50);
-
-      for (let i = 0; i <= count; i++) {
-        const t = count === 0 ? 1 : i / count;
-        const px = lastMouse.x + (x - lastMouse.x) * t;
-        const py = lastMouse.y + (y - lastMouse.y) * t;
-
-        const rx = (Math.random() - 0.5) * 30.0;
-        const ry = (Math.random() - 0.5) * 30.0;
-
-        if (currentTail) currentTail.spawnParticle(px, py, rx, ry, now);
-      }
-      lastMouse = { x, y };
+      emitConfigUpdate(configManager.getState());
     });
   } catch (err) {
     console.error("CRITICAL OVERLAY ERROR:", err);

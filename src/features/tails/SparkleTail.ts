@@ -1,0 +1,24 @@
+import { BaseTail } from "./BaseTail";
+import { registerTail } from "./registry";
+
+import sparkleVert from "./shaders/sparkle.vert.glsl?raw";
+import sparkleFrag from "./shaders/sparkle.frag.glsl?raw";
+
+export class SparkleTail extends BaseTail {
+  public getShaders() {
+    return {
+      vertex: sparkleVert,
+      fragment: sparkleFrag,
+    };
+  }
+
+  public updateEffect(_dt: number): void {}
+}
+
+registerTail({
+  id: "sparkle",
+  name: "Sparkle",
+  description: "Sparkly particle effect",
+  creator: { name: "nuwandev" },
+  class: SparkleTail,
+});

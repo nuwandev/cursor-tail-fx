@@ -1,7 +1,25 @@
 {
-  "name": "tauri-app",
+  "name": "cursor-tail-fx",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "license": "Apache-2.0",
+  "author": "Theekshana Nuwan (nuwandev)",
+  "description": "Cursora — GPU-accelerated cursor trail effects for Windows (Tauri + WebGL2)",
+  "keywords": [
+    "cursor",
+    "cursor-trail",
+    "cursor-effects",
+    "windows",
+    "tauri",
+    "webgl2",
+    "shaders",
+    "particle-system"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nuwandev/cursor-tail-fx.git"
+  },
+  "homepage": "https://github.com/nuwandev/cursor-tail-fx",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -15,7 +33,15 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
+    "@types/node": "^25.5.0",
+    "@typescript-eslint/eslint-plugin": "^8.58.0",
+    "@typescript-eslint/parser": "^8.58.0",
+    "eslint": "^10.1.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "prettier": "^3.8.1",
+    "typescript": "~5.6.2",
     "vite": "^6.0.3",
-    "typescript": "~5.6.2"
+    "vite-tsconfig-paths": "^6.1.1"
   }
 }
