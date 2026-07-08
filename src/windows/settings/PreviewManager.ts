@@ -26,6 +26,11 @@ export class PreviewManager {
   private readonly containerCanvasMap: Map<string, HTMLCanvasElement> = new Map();
   private readonly observer: IntersectionObserver;
 
+  /* Bound handlers kept so they can be unregistered in destroyAll(). */
+  private readonly boundOnVisibilityChange = this.onVisibilityChange.bind(this);
+  private readonly boundOnBlur = this.pauseAll.bind(this);
+  private readonly boundOnFocus = this.resumeAll.bind(this);
+
   constructor() {
     this.observer = new IntersectionObserver(
       (entries) => {
@@ -42,6 +47,19 @@ export class PreviewManager {
       },
       { threshold: 0.1 },
     );
+
+    /* Pause previews when the window is hidden or loses focus to save CPU/GPU. */
+    document.addEventListener("visibilitychange", this.boundOnVisibilityChange);
+    window.addEventListener("blur", this.boundOnBlur);
+    window.addEventListener("focus", this.boundOnFocus);
+  }
+
+  private onVisibilityChange(): void {
+    if (document.hidden) {
+      this.pauseAll();
+    } else {
+      this.resumeAll();
+    }
   }
 
   async init(container: HTMLElement) {
@@ -162,6 +180,9 @@ export class PreviewManager {
 
   destroyAll() {
     this.observer.disconnect();
+    document.removeEventListener("visibilitychange", this.boundOnVisibilityChange);
+    window.removeEventListener("blur", this.boundOnBlur);
+    window.removeEventListener("focus", this.boundOnFocus);
     this.entries.forEach((entry) => {
       if (entry.animFrame) cancelAnimationFrame(entry.animFrame);
       entry.engine.destroy();
