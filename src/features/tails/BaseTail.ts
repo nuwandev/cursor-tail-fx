@@ -16,6 +16,10 @@ const MAX_CANVAS_PX = 1920;
 
 const TARGET_FRAME_MS = 1000 / 60;
 
+/** Maximum delta-time fed to simulation. Caps spikes (tab-switch, GC pauses) so
+ *  they don't cause large jumps in particle positions or sizes. */
+const DT_MAX_MS = 32;
+
 const IDLE_TIMEOUT_MS = 1500;
 
 const RESIZE_DEBOUNCE_MS = 50;
@@ -279,7 +283,8 @@ export abstract class BaseTail {
     }
     this.lastFrameTime = time - (elapsed % TARGET_FRAME_MS); // Carry over remainder
 
-    const dt = elapsed;
+    /* Clamp dt so scheduling spikes don't produce large simulation jumps. */
+    const dt = Math.min(elapsed, DT_MAX_MS);
     this.updateEffect(dt);
 
     const gl = this.gl;
