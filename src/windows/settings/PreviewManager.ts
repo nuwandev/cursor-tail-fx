@@ -130,6 +130,7 @@ export class PreviewManager {
       );
 
       entry.engine.updateMouse(x, y);
+      entry.tail.renderFrame(timestamp);
 
       entry.animFrame = requestAnimationFrame(tick);
     };
