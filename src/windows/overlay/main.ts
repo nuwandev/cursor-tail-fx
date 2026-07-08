@@ -11,6 +11,8 @@ import { invoke } from "@tauri-apps/api/core";
 let renderer: Renderer | null = null;
 let tailEnabled = true;
 let canvasEl: HTMLCanvasElement | null = null;
+let pendingCursor: { x: number; y: number } | null = null;
+let overlayFrameId: number | null = null;
 
 async function syncBackendTailEnabled(enabled: boolean): Promise<void> {
   try {
@@ -20,7 +22,36 @@ async function syncBackendTailEnabled(enabled: boolean): Promise<void> {
   }
 }
 
+function ensureOverlayLoop(): void {
+  if (overlayFrameId !== null) return;
+  overlayFrameId = requestAnimationFrame(handleOverlayFrame);
+}
+
+function stopOverlayLoop(): void {
+  if (overlayFrameId !== null) {
+    cancelAnimationFrame(overlayFrameId);
+    overlayFrameId = null;
+  }
+  pendingCursor = null;
+}
+
+function handleOverlayFrame(time: number): void {
+  overlayFrameId = null;
+  if (!tailEnabled || !renderer) return;
+
+  if (pendingCursor) {
+    renderer.handleMouseMove(pendingCursor.x, pendingCursor.y);
+    pendingCursor = null;
+  }
+
+  const keepRendering = renderer.renderFrame(time);
+  if (pendingCursor || keepRendering) {
+    ensureOverlayLoop();
+  }
+}
+
 function stopOverlayRendering(): void {
+  stopOverlayLoop();
   try {
     renderer?.destroy();
   } finally {
@@ -92,7 +123,8 @@ async function init() {
 
     onCursorMove((nx, ny) => {
       if (!tailEnabled) return;
-      renderer?.handleMouseMove(nx, ny);
+      pendingCursor = { x: nx, y: ny };
+      ensureOverlayLoop();
     });
 
     onTrayToggleTail(() => {

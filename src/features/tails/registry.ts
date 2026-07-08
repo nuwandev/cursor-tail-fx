@@ -7,7 +7,9 @@ function normalizeTailMeta(meta: TailMeta): TailMeta {
   const creatorUrl = meta.creator?.url?.trim();
 
   if (!creatorName) {
-    console.warn(`[TailRegistry] Tail '${meta.id}' registered without creator; defaulting to 'Unknown'.`);
+    console.warn(
+      `[TailRegistry] Tail '${meta.id}' registered without creator; defaulting to 'Unknown'.`,
+    );
     return { ...meta, creator: { name: "Unknown" } };
   }
 
