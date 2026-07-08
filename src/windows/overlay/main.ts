@@ -108,7 +108,7 @@ async function init() {
 
     void syncBackendTailEnabled(tailEnabled);
 
-    onConfigUpdate((config) => {
+    const unlistenConfig = await onConfigUpdate((config) => {
       configManager.applyExternalConfig(config);
 
       const nextEnabled = config.tailEnabled !== false;
@@ -124,13 +124,13 @@ async function init() {
       }
     });
 
-    onCursorMove((nx, ny) => {
+    const unlistenCursor = await onCursorMove((nx, ny) => {
       if (!tailEnabled) return;
       pendingCursor = { x: nx, y: ny };
       ensureOverlayLoop();
     });
 
-    onTrayToggleTail(() => {
+    const unlistenTray = await onTrayToggleTail(() => {
       const current = configManager.getState();
       const nextEnabled = !current.tailEnabled;
       configManager.setTailEnabled(nextEnabled);
@@ -141,6 +141,13 @@ async function init() {
       void syncBackendTailEnabled(tailEnabled);
 
       emitConfigUpdate(configManager.getState());
+    });
+
+    /* Clean up Tauri event listeners when the window is unloaded to prevent accumulation. */
+    window.addEventListener("beforeunload", () => {
+      unlistenConfig();
+      unlistenCursor();
+      unlistenTray();
     });
   } catch (err) {
     console.error("CRITICAL OVERLAY ERROR:", err);

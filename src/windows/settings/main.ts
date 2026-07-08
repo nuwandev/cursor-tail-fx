@@ -346,32 +346,11 @@ autostartCheckbox?.addEventListener("change", () => {
   })();
 });
 
-onConfigUpdate((config) => {
-  configManager.applyExternalConfig(config);
-  activeTailId = configManager.getState().activeTailId;
-  currentTailConfig = configManager.getTailConfig(activeTailId);
-
-  previewManager.destroyAll();
-  renderEffectCards();
-  void (async () => {
-    await previewManager.init(document.getElementById("effect-cards")!);
-    previewManager.startAll();
-  })();
-
-  renderThemeSwatches();
-  syncSliders();
-  syncTailToggleButton();
-});
-
 async function initPreviews() {
   const container = document.getElementById("effect-cards")!;
   await previewManager.init(container);
   previewManager.startAll();
 }
-
-window.addEventListener("beforeunload", () => {
-  previewManager.destroyAll();
-});
 
 document.addEventListener("DOMContentLoaded", () => {
   renderEffectCards();
@@ -381,4 +360,27 @@ document.addEventListener("DOMContentLoaded", () => {
   syncTailToggleButton();
   void initAutostartCheckbox();
   broadcastUpdate();
+
+  /* Register the config-update listener and keep the unlisten fn for cleanup. */
+  void onConfigUpdate((config) => {
+    configManager.applyExternalConfig(config);
+    activeTailId = configManager.getState().activeTailId;
+    currentTailConfig = configManager.getTailConfig(activeTailId);
+
+    previewManager.destroyAll();
+    renderEffectCards();
+    void (async () => {
+      await previewManager.init(document.getElementById("effect-cards")!);
+      previewManager.startAll();
+    })();
+
+    renderThemeSwatches();
+    syncSliders();
+    syncTailToggleButton();
+  }).then((unlisten) => {
+    window.addEventListener("beforeunload", () => {
+      unlisten();
+      previewManager.destroyAll();
+    });
+  });
 });
