@@ -4,6 +4,7 @@
 [![Release](https://img.shields.io/github/v/release/nuwandev/cursor-tail-fx?display_name=tag)](https://github.com/nuwandev/cursor-tail-fx/releases)
 [![Downloads](https://img.shields.io/github/downloads/nuwandev/cursor-tail-fx/total.svg)](https://github.com/nuwandev/cursor-tail-fx/releases)
 ![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-informational)
+![Visitors](https://visitor-badge.laobi.icu/badge?page_id=nuwandev.cursor-tail-fx)
 
 GPU‑accelerated cursor trail effects for Windows — built with **Tauri (Rust)** + **WebGL 2 (TypeScript)**.
 
