@@ -59,6 +59,11 @@ export class Renderer {
     this.engine.updateMouse(x, y);
   }
 
+  renderFrame(time: number): boolean {
+    if (!this.tail) return false;
+    return this.tail.renderFrame(time);
+  }
+
   handleConfigUpdate(newConfig: AppConfig) {
     if (newConfig.activeTailId === this.config.activeTailId) {
       this.config = newConfig;
