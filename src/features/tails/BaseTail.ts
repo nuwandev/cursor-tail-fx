@@ -152,8 +152,6 @@ export abstract class BaseTail {
     this.locs.u_opacityMultiplier = gl.getUniformLocation(this.program, "u_opacityMultiplier");
 
     this.setupCustomUniforms();
-
-    this.render = this.render.bind(this);
   }
 
   /**
@@ -262,24 +260,22 @@ export abstract class BaseTail {
     if (!this.isRendering) {
       this.isRendering = true;
       this.lastFrameTime = 0;
-      requestAnimationFrame(this.render);
     }
   }
 
-  private render(time: number): void {
-    if (!this.isRendering) return;
+  public renderFrame(time: number): boolean {
+    if (!this.isRendering) return false;
 
     if (time - this.lastParticleTime > IDLE_TIMEOUT_MS) {
       this.gl.clearColor(0, 0, 0, 0);
       this.gl.clear(this.gl.COLOR_BUFFER_BIT);
       this.isRendering = false;
-      return;
+      return false;
     }
 
     const elapsed = time - this.lastFrameTime;
     if (elapsed < TARGET_FRAME_MS) {
-      requestAnimationFrame(this.render);
-      return;
+      return true;
     }
     this.lastFrameTime = time - (elapsed % TARGET_FRAME_MS); // Carry over remainder
 
@@ -307,7 +303,7 @@ export abstract class BaseTail {
     gl.drawArraysInstanced(gl.TRIANGLES, 0, 6, this.activeParticleCount);
     gl.bindVertexArray(null);
 
-    requestAnimationFrame(this.render);
+    return true;
   }
 
   public destroy(): void {
