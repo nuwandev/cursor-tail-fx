@@ -44,6 +44,9 @@ function handleOverlayFrame(time: number): void {
     pendingCursor = null;
   }
 
+  /* Upload any pending particle data exactly once per frame. */
+  renderer.flush(time);
+
   const keepRendering = renderer.renderFrame(time);
   if (pendingCursor || keepRendering) {
     ensureOverlayLoop();

@@ -64,6 +64,14 @@ export class Renderer {
     return this.tail.renderFrame(time);
   }
 
+  /**
+   * Upload any pending particle data to the GPU.
+   * Call once per rAF frame, after handleMouseMove and before renderFrame.
+   */
+  flush(now: number): void {
+    this.engine?.flush(now);
+  }
+
   handleConfigUpdate(newConfig: AppConfig) {
     if (newConfig.activeTailId === this.config.activeTailId) {
       this.config = newConfig;
